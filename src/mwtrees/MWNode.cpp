@@ -12,6 +12,12 @@
 #include "mwutils/Timer.h"
 #include "mwutils/Printer.h"
 
+#ifdef HAVE_BLAS
+extern "C" {
+#include BLAS_H
+}
+#endif
+
 using namespace std;
 using namespace Eigen;
 using namespace mrcpp;

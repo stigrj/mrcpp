@@ -8,4 +8,5 @@ target_include_directories(mrcpp-tests PRIVATE
 
 target_link_libraries(mrcpp-tests
     mrcpp
+    ${BLAS_LIBRARIES}
     )

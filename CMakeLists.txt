@@ -88,6 +88,14 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/compiler_flags)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/custom)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/downloaded)
 
+option(BLAS_H "CBLAS header file" "")
+if(BLAS_H)
+  include(FindBLAS)
+  if(BLAS_FOUND)
+    set(HAVE_BLAS 1)
+  endif(BLAS_FOUND)
+endif(BLAS_H)
+
 # included cmake modules
 include(autocmake_cxx)
 include(GNU.CXX)

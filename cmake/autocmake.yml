@@ -23,6 +23,7 @@ modules:
       - '%(url_root)modules/code_coverage.cmake'
   - libs:
     - source:
+      - 'custom/blas.cmake'
       - 'custom/eigen.cmake'
       - 'custom/catch.cmake'
   - custom:

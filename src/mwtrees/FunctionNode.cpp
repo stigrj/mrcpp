@@ -4,12 +4,6 @@
 #include "mwutils/Printer.h"
 #include "mwcore/QuadratureCache.h"
 
-#ifdef HAVE_BLAS
-extern "C" {
-#include BLAS_H
-}
-#endif
-
 using namespace std;
 using namespace Eigen;
 using namespace mrcpp;
@@ -179,15 +173,11 @@ double mrcpp::dotScaling(const FunctionNode<D> &bra, const FunctionNode<D> &ket)
     const double *b = ket.getCoefs();
 
     int size = bra.getKp1_d();
-#ifdef HAVE_BLAS
-    return cblas_ddot(size, a, 1, b, 1);
-#else
     double result = 0.0;
     for (int i = 0; i < size; i++) {
         result += a[i]*b[i];
     }
     return result;
-#endif
 }
 
 /** Inner product of the functions represented by the wavelet basis of the nodes.
@@ -210,15 +200,11 @@ double mrcpp::dotWavelet(const FunctionNode<D> &bra, const FunctionNode<D> &ket)
 
     int start = bra.getKp1_d();
     int size = (bra.getTDim() - 1) * start;
-#ifdef HAVE_BLAS
-    return cblas_ddot(size, &a[start], 1, &b[start], 1);
-#else
     double result = 0.0;
     for (int i = 0; i < size; i++) {
         result += a[start+i]*b[start+i];
     }
     return result;
-#endif
 }
 
 template double mrcpp::dotScaling(const FunctionNode<1> &bra, const FunctionNode<1> &ket);

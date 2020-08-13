@@ -33,6 +33,7 @@ template <int D> class ProjectedNode final : public FunctionNode<D> {
 public:
     void createChildren() override;
     void genChildren() override;
+    void genParent() override;
     void deleteChildren() override;
 
     friend class SerialFunctionTree<D>;

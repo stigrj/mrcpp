@@ -61,7 +61,7 @@ SerialFunctionTree<D>::SerialFunctionTree(FunctionTree<D> *tree, SharedMemory *m
         1024; // 2 MB small for no waisting place, but large enough so that latency and overhead work is negligible
     if (D < 3) {
         // define rather from number of nodes per chunk
-        this->maxNodesPerChunk = 64;
+        this->maxNodesPerChunk = 1024;
         sizePerChunk = this->maxNodesPerChunk * this->sizeNodeCoeff;
     } else {
         this->maxNodesPerChunk = (sizePerChunk / this->sizeNodeCoeff / sizeof(double) / 8) * 8;
@@ -185,7 +185,9 @@ template <int D> void SerialFunctionTree<D>::allocChildren(MWNode<D> &parent) {
         child_p->coefs = coefs_p;
 
         child_p->lockX = 0;
+
         child_p->serialIx = sIx;
+
         child_p->parentSerialIx = parent.serialIx;
         child_p->childSerialIx = -1;
 
@@ -203,6 +205,44 @@ template <int D> void SerialFunctionTree<D>::allocChildren(MWNode<D> &parent) {
         child_p++;
         coefs_p += this->sizeNodeCoeff;
     }
+}
+
+template <int D> void SerialFunctionTree<D>::allocParent(MWNode<D> &child) {
+    int sIx;
+    double *coefs_p;
+    // NB: serial tree MUST generate all children consecutively
+    // all children must be generated at once if several threads are active
+    ProjectedNode<D> *parent_p = this->allocNodes(1, &sIx, &coefs_p);
+
+    // position of first child
+    child.parent = parent_p;
+    child.parentSerialIx = sIx;
+
+    for (int cIdx = 0; cIdx < child.getTDim(); cIdx++) parent_p->children[cIdx] = nullptr;
+    parent_p->children[0] = &child;
+
+    *(char **)(parent_p) = this->cvptr_ProjectedNode;
+    parent_p->tree = child.tree;
+    parent_p->parent = nullptr;
+
+    parent_p->nodeIndex = NodeIndex<D>(child.getScale() - 1);
+    parent_p->hilbertPath = HilbertPath<D>();
+    parent_p->n_coefs = this->sizeNodeCoeff;
+    parent_p->coefs = coefs_p;
+
+    parent_p->lockX = 0;
+    parent_p->serialIx = sIx;
+    parent_p->parentSerialIx = -1;
+    parent_p->childSerialIx = child.serialIx;
+
+    parent_p->status = 0;
+
+    parent_p->clearNorms();
+    parent_p->setIsBranchNode();
+    parent_p->setIsAllocated();
+    parent_p->clearHasCoefs();
+
+    parent_p->tree->incrementNodeCount(parent_p->getScale());
 }
 
 template <int D> void SerialFunctionTree<D>::allocGenChildren(MWNode<D> &parent) {

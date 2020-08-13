@@ -136,7 +136,13 @@ template <int D> void MWTree<D>::mwTransformDown(bool overwrite) {
 #pragma omp for schedule(guided)
             for (int i = 0; i < n_nodes; i++) {
                 MWNode<D> &node = *nodeTable[n][i];
-                if (node.isBranchNode()) { node.giveChildrenCoefs(overwrite); }
+                if (node.isBranchNode()) {
+                    if (this->getRootScale() > node.getScale()) {
+                        node.giveChildCoefs(0, overwrite);
+                    } else {
+                        node.giveChildrenCoefs(overwrite);
+                    }
+                }
             }
         }
     }
@@ -169,13 +175,21 @@ template <int D> void MWTree<D>::deleteNodeCounters() {
  * about it. */
 template <int D> void MWTree<D>::incrementNodeCount(int scale) {
     int depth = scale - getRootScale();
-    assert(depth >= 0);
-    int n = this->nodesAtDepth.size() - 1;
-    if (depth > n) {
-        for (int i = 0; i < depth - n; i++) { this->nodesAtDepth.push_back(0); }
+    if (depth < 0) {
+        int n = this->nodesAtNegativeDepth.size();
+        if (-depth > n) {
+            for (int i = 0; i < -depth - n; i++) { this->nodesAtNegativeDepth.push_back(0); }
+        }
+        this->nodesAtNegativeDepth[-depth - 1]++;
+        this->nNodes++;
+    } else {
+        int n = this->nodesAtDepth.size() - 1;
+        if (depth > n) {
+            for (int i = 0; i < depth - n; i++) { this->nodesAtDepth.push_back(0); }
+        }
+        this->nodesAtDepth[depth]++;
+        this->nNodes++;
     }
-    this->nodesAtDepth[depth]++;
-    this->nNodes++;
 }
 
 /** Decrement node counters for non-GenNodes. This routine is not thread
@@ -184,13 +198,23 @@ template <int D> void MWTree<D>::incrementNodeCount(int scale) {
  * about it. */
 template <int D> void MWTree<D>::decrementNodeCount(int scale) {
     int depth = scale - getRootScale();
-    assert(depth >= 0);
-    assert(depth < this->nodesAtDepth.size());
-    this->nodesAtDepth[depth]--;
-    assert(this->nodesAtDepth[depth] >= 0);
-    if (this->nodesAtDepth[depth] == 0 and this->nodesAtDepth.size() > 1) { this->nodesAtDepth.pop_back(); }
-    this->nNodes--;
-    assert(this->nNodes >= 0);
+    if (depth < 0) {
+        assert(depth < this->nodesAtNegativeDepth.size());
+        this->nodesAtNegativeDepth[-depth - 1]--;
+        assert(this->nodesAtNegativeDepth[depth - 1] >= 0);
+        if (this->nodesAtNegativeDepth[-depth - 1] == 0 and this->nodesAtNegativeDepth.size() > 1) {
+            this->nodesAtNegativeDepth.pop_back();
+        }
+        this->nNodes--;
+
+    } else {
+        assert(depth < this->nodesAtDepth.size());
+        this->nodesAtDepth[depth]--;
+        assert(this->nodesAtDepth[depth] >= 0);
+        if (this->nodesAtDepth[depth] == 0 and this->nodesAtDepth.size() > 1) { this->nodesAtDepth.pop_back(); }
+        this->nNodes--;
+        assert(this->nNodes >= 0);
+    }
 }
 
 /** Update GenNode counts in a safe way. Since GenNodes are created on the
@@ -284,6 +308,7 @@ template <int D> MWNode<D> &MWTree<D>::getNode(NodeIndex<D> idx) {
     if (getRootBox().isPeriodic()) { periodic::indx_manipulation<D>(idx, getRootBox().getPeriodic()); }
     MWNode<D> &root = getRootBox().getNode(idx);
     assert(root.isAncestor(idx));
+    if (getRootScale() > idx.getScale()) return *root.retrieveParent(idx);
     return *root.retrieveNode(idx);
 }
 
@@ -364,6 +389,7 @@ template <int D> void MWTree<D>::makeNodeTable(MWNodeVector<D> &nodeTable) {
 /** Traverse tree along the Hilbert path and find nodes of any rankId.
  * Returns one nodeVector per scale. GenNodes disregarded. */
 template <int D> void MWTree<D>::makeNodeTable(std::vector<MWNodeVector<D>> &nodeTable) {
+
     HilbertIterator<D> it(this);
     it.setReturnGenNodes(false);
     while (it.next()) {
@@ -374,6 +400,15 @@ template <int D> void MWTree<D>::makeNodeTable(std::vector<MWNodeVector<D>> &nod
         }
         nodeTable[depth].push_back(&node);
     }
+
+    int before = this->getNNodes();
+    for (auto i = 0; i < this->nodesAtNegativeDepth.size(); i++) {
+        if (this->nodesAtNegativeDepth[i] < 1) continue;
+        NodeIndex<D> gInx(-(i + 1));
+        nodeTable.insert(nodeTable.begin(), std::vector<MWNode<D> *>{&this->getNode(gInx)});
+    }
+    int after = this->getNNodes();
+    if (before != after) MSG_ABORT("No new nodes should be generated");
 }
 
 template <int D> MWNodeVector<D> *MWTree<D>::copyEndNodeTable() {
@@ -466,6 +501,10 @@ template <int D> void MWTree<D>::deleteGenerated() {
     for (int n = 0; n < getNEndNodes(); n++) { getEndMWNode(n).deleteGenerated(); }
 }
 
+template <int D> void MWTree<D>::deleteGeneratedParents() {
+    for (int n = 0; n < getRootBox().size(); n++) { getRootMWNode(n).deleteParent(); }
+}
+
 template <int D> void MWTree<D>::saveTree(const std::string &file) {
     NOT_IMPLEMENTED_ABORT;
 }
@@ -482,6 +521,10 @@ template <int D> std::ostream &MWTree<D>::print(std::ostream &o) {
     o << "  endNodes: " << this->endNodeTable.size() << std::endl;
     o << "  genNodes: " << this->getNGenNodes() << std::endl;
     o << "  nodes per scale: " << std::endl;
+    for (int i = this->nodesAtNegativeDepth.size() - 1; i >= 0; i--) {
+        o << "    scale=" << -(i + this->getRootScale() + 1) << "  nodes=" << this->nodesAtNegativeDepth[i]
+          << std::endl;
+    }
     for (int i = 0; i < this->nodesAtDepth.size(); i++) {
         o << "    scale=" << i + this->getRootScale() << "  nodes=" << this->nodesAtDepth[i] << std::endl;
     }

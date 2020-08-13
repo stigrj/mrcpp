@@ -94,7 +94,9 @@ void apply(double prec,
     out.mwTransform(TopDown, false); // add coarse scale contributions
     out.mwTransform(BottomUp);
     out.calcSquareNorm();
+    out.deleteGeneratedParents();
     inp.deleteGenerated();
+    inp.deleteGeneratedParents();
     post_t.stop();
 
     print::time(10, "Time pre operator", pre_t);
@@ -150,7 +152,9 @@ void apply_on_unit_cell(bool inside,
     out.mwTransform(TopDown, false); // add coarse scale contributions
     out.mwTransform(BottomUp);
     out.calcSquareNorm();
+    out.deleteGeneratedParents();
     inp.deleteGenerated();
+    inp.deleteGeneratedParents();
     post_t.stop();
 
     print::time(10, "Time pre operator", pre_t);

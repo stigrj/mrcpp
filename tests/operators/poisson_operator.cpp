@@ -120,7 +120,7 @@ TEST_CASE("Initialize Poisson operator", "[init_poisson], [poisson_operator], [m
                     }
                 }
                 O.calcBandWidths(band_prec);
-                REQUIRE(O.getMaxBandWidth(3) == 3);
+                REQUIRE(O.getMaxBandWidth(3) == 7);
                 REQUIRE(O.getMaxBandWidth(7) == 5);
                 REQUIRE(O.getMaxBandWidth(13) == 9);
                 REQUIRE(O.getMaxBandWidth(19) == -1);

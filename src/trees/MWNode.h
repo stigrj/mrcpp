@@ -125,7 +125,9 @@ public:
 
     virtual void createChildren();
     virtual void genChildren();
+    virtual void genParent();
     virtual void deleteChildren();
+    virtual void deleteParent();
 
     virtual void cvTransform(int kind);
     virtual void mwTransform(int kind);
@@ -196,6 +198,8 @@ protected:
 
     virtual void reCompress();
     virtual void giveChildrenCoefs(bool overwrite = true);
+    virtual void giveChildCoefs(int cIdx, bool overwrite = true);
+    virtual void giveParentCoefs(bool overwrite = true);
     virtual void copyCoefsFromChildren();
 
     int getChildIndex(const NodeIndex<D> &nIdx) const;
@@ -206,6 +210,7 @@ protected:
 
     MWNode<D> *retrieveNode(const Coord<D> &r, int depth);
     MWNode<D> *retrieveNode(const NodeIndex<D> &idx);
+    MWNode<D> *retrieveParent(const NodeIndex<D> &idx);
 
     const MWNode<D> *retrieveNodeNoGen(const NodeIndex<D> &idx) const;
     MWNode<D> *retrieveNodeNoGen(const NodeIndex<D> &idx);
@@ -217,6 +222,7 @@ protected:
     MWNode<D> *retrieveNodeOrEndNode(const NodeIndex<D> &idx);
 
     void threadSafeGenChildren();
+    void threadSafeGenParent();
     void deleteGenerated();
 
     virtual std::ostream &print(std::ostream &o) const;

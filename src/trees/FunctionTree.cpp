@@ -63,6 +63,7 @@ template <int D> FunctionTree<D>::~FunctionTree() {
     for (int i = 0; i < this->rootBox.size(); i++) {
         MWNode<D> &root = this->getRootMWNode(i);
         root.deleteChildren();
+        root.deleteParent();
         root.dealloc();
         this->rootBox.clearNode(i);
     }

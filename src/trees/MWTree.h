@@ -111,6 +111,7 @@ public:
     void clearEndNodeTable() { this->endNodeTable.clear(); }
 
     void deleteGenerated();
+    void deleteGeneratedParents();
 
     int getNThreads() const { return this->nThreads; }
 
@@ -159,9 +160,10 @@ protected:
     int nNodes;
     int *nGenNodes;
     double squareNorm;
-    NodeBox<D> rootBox;            ///< The actual container of nodes
-    MWNodeVector<D> endNodeTable;  ///< Final projected nodes
-    std::vector<int> nodesAtDepth; ///< Node counter
+    NodeBox<D> rootBox;                    ///< The actual container of nodes
+    MWNodeVector<D> endNodeTable;          ///< Final projected nodes
+    std::vector<int> nodesAtDepth;         ///< Node counter
+    std::vector<int> nodesAtNegativeDepth; ///< Node counter
 
     virtual void mwTransformDown(bool overwrite);
     virtual void mwTransformUp();

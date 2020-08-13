@@ -42,6 +42,11 @@ template <int D> void ProjectedNode<D>::genChildren() {
     this->setIsBranchNode();
 }
 
+template <int D> void ProjectedNode<D>::genParent() {
+    if (this->parent != nullptr) MSG_ABORT("Node is not an orphan");
+    this->tree->getSerialTree()->allocParent(*this);
+}
+
 template <int D> void ProjectedNode<D>::deleteChildren() {
     MWNode<D>::deleteChildren();
     this->setIsEndNode();

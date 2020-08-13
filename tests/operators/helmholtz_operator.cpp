@@ -123,7 +123,7 @@ TEST_CASE("Helmholtz' kernel", "[init_helmholtz], [helmholtz_operator], [mw_oper
                     }
                 }
                 O.calcBandWidths(band_prec);
-                REQUIRE(O.getMaxBandWidth(3) == 3);
+                REQUIRE(O.getMaxBandWidth(3) == 7);
                 REQUIRE(O.getMaxBandWidth(7) == 5);
                 REQUIRE(O.getMaxBandWidth(13) == 9);
                 REQUIRE(O.getMaxBandWidth(20) == -1);

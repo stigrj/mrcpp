@@ -96,7 +96,12 @@ double ConvolutionOperator<D>::calcMinDistance(const MultiResolutionAnalysis<D> 
 template <int D> double ConvolutionOperator<D>::calcMaxDistance(const MultiResolutionAnalysis<D> &MRA) const {
     const Coord<D> &lb = MRA.getWorldBox().getLowerBounds();
     const Coord<D> &ub = MRA.getWorldBox().getUpperBounds();
-    return math_utils::calc_distance<D>(lb, ub);
+    auto max_distance = math_utils::calc_distance<D>(lb, ub);
+    if (MRA.getWorldBox().isPeriodic()) {
+        max_distance *= std::pow(2.0, -MRA.getOperatorScale());
+        if (MRA.getOperatorScale() == 0) max_distance *= MRA.getPeriodicOperatorReach();
+    }
+    return max_distance;
 }
 
 template class ConvolutionOperator<1>;

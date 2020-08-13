@@ -37,7 +37,7 @@ bool BandWidth::isEmpty(int depth) const {
 }
 
 int BandWidth::getWidth(int depth, int index) const {
-    assert(depth >= 0);
+    if (depth < 0) MSG_ABORT("Depth cannot be negative!");
     assert(index >= 0 and index < 4);
     if (depth > getDepth()) { // No bw at requested depth
         return -1;
@@ -46,7 +46,7 @@ int BandWidth::getWidth(int depth, int index) const {
 }
 
 int BandWidth::getMaxWidth(int depth) const {
-    assert(depth >= 0);
+    if (depth < 0) MSG_ABORT("Depth cannot be negative!");
     if (depth > getDepth()) { // No bw at requested depth
         return -1;
     }
@@ -54,7 +54,7 @@ int BandWidth::getMaxWidth(int depth) const {
 }
 
 void BandWidth::setWidth(int depth, int index, int wd) {
-    assert(depth >= 0 and depth < getDepth());
+    if (depth < 0 or depth >= getDepth()) MSG_ABORT("Depth cannot be negative!");
     assert(index >= 0 and index < 4);
     assert(wd >= 0);
     this->widths(depth, index) = wd;

@@ -226,10 +226,19 @@ TEST_CASE("Apply Periodic Helmholtz' operator", "[apply_periodic_helmholtz], [he
     project<3>(proj_prec, source_tree, source);
 
     FunctionTree<3> sol_tree(MRA);
+    FunctionTree<3> in_tree(MRA);
+    FunctionTree<3> out_tree(MRA);
+    FunctionTree<3> in_out_tree(MRA);
 
     apply(apply_prec, sol_tree, H, source_tree);
+    apply_near_field(apply_prec, in_tree, H, source_tree);
+    apply_far_field(apply_prec, out_tree, H, source_tree);
+
+    add(apply_prec, in_out_tree, 1.0, in_tree, 1.0, out_tree);
 
     REQUIRE(sol_tree.evalf({0.0, 0.0, 0.0}) == Approx(1.0).epsilon(apply_prec));
     REQUIRE(sol_tree.evalf({pi, 0.0, 0.0}) == Approx(-1.0).epsilon(apply_prec));
+    REQUIRE(in_out_tree.evalf({0.0, 0.0, 0.0}) == Approx(1.0).epsilon(apply_prec));
+    REQUIRE(in_out_tree.evalf({pi, 0.0, 0.0}) == Approx(-1.0).epsilon(apply_prec));
 }
 } // namespace helmholtz_operator

@@ -53,8 +53,10 @@ SerialOperatorTree::SerialOperatorTree(OperatorTree *tree)
     NOtrees++;
 
     this->sizeNodeCoeff = 4 * this->tree_p->getKp1_d();
-
-    this->maxNodesPerChunk = 1024;
+    auto oper_reach = (*tree).getPeriodicOperatorReach();
+    auto n = 6;
+    while (std::pow(2, n) < std::pow(oper_reach, 2)) { n += 1; }
+    this->maxNodesPerChunk = std::pow(2, n);
     this->lastNode = (OperatorNode *)this->sNodes; // position of last allocated node
 
     // make virtual table pointers

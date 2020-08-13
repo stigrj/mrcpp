@@ -33,18 +33,39 @@
 namespace mrcpp {
 namespace periodic {
 
-template <int D> void indx_manipulation(NodeIndex<D> &idx, const std::array<bool, D> &periodic) {
-    int translation[D];
-    if (idx.getScale() < 0) MSG_ABORT("Negative value in bit-shift");
-    int two_n = 1 << idx.getScale();
+template <int D> bool in_unit_cell(int translation[D], int scale) {
+    if (scale < 0) MSG_ABORT("Negative value in bit-shift");
+    int two_n = 1 << scale;
+
+    int l[D];
     for (auto i = 0; i < D; i++) {
-        translation[i] = idx.getTranslation(i);
-        if (periodic[i]) {
-            if (translation[i] >= two_n) translation[i] = translation[i] % two_n;
-            if (translation[i] < 0) translation[i] = (translation[i] + 1) % two_n + two_n - 1;
-        }
+        l[i] = translation[i];
+        if (translation[i] >= two_n) return false;
+        if (translation[i] < 0) return false;
     }
-    idx.setTranslation(translation);
+
+    return true;
+}
+
+template <int D> void indx_manipulation(NodeIndex<D> &idx, const std::array<bool, D> &periodic) {
+    if (not periodic[0]) MSG_ABORT("Only for periodic cases!");
+
+    if (idx.getScale() < 0) {
+        idx.setTranslation(nullptr);
+    } else {
+
+        int translation[D];
+        int two_n = 1 << idx.getScale();
+
+        for (auto i = 0; i < D; i++) {
+            translation[i] = idx.getTranslation(i);
+            if (periodic[i]) {
+                if (translation[i] >= two_n) translation[i] = translation[i] % two_n;
+                if (translation[i] < 0) translation[i] = (translation[i] + 1) % two_n + two_n - 1;
+            }
+        }
+        idx.setTranslation(translation);
+    }
 }
 
 template <int D> void coord_manipulation(Coord<D> &r, const std::array<bool, D> &periodic) {
@@ -55,6 +76,10 @@ template <int D> void coord_manipulation(Coord<D> &r, const std::array<bool, D> 
         }
     }
 }
+
+template bool in_unit_cell<1>(int translation[1], int scale);
+template bool in_unit_cell<2>(int translation[2], int scale);
+template bool in_unit_cell<3>(int translation[3], int scale);
 
 template void indx_manipulation<1>(NodeIndex<1> &idx, const std::array<bool, 1> &periodic);
 template void indx_manipulation<2>(NodeIndex<2> &idx, const std::array<bool, 2> &periodic);

@@ -31,6 +31,7 @@
 #include "trees/OperatorNode.h"
 #include "utils/Printer.h"
 #include "utils/Timer.h"
+#include "utils/periodic_utils.h"
 
 #ifdef HAVE_BLAS
 extern "C" {
@@ -185,9 +186,35 @@ void ConvolutionCalculator<D>::fillOperBand(MWNodeVector<D> *band,
             l[dim]++;
             continue;
         }
-        MWNode<D> &fNode = this->fTree->getNode(idx);
-        idx_band.push_back(idx);
-        band->push_back(&fNode);
+        if (not manipulateOperator) {
+            MWNode<D> &fNode = this->fTree->getNode(idx);
+            idx_band.push_back(idx);
+            band->push_back(&fNode);
+
+        } else {
+            const auto oper_scale = this->fTree->getMRA().getOperatorScale();
+            if (oper_scale == 0) {
+                if (periodic::in_unit_cell<D>(l, idx.getScale()) and onUnitcell) {
+                    MWNode<D> &fNode = this->fTree->getNode(idx);
+                    idx_band.push_back(idx);
+                    band->push_back(&fNode);
+                }
+                if (not periodic::in_unit_cell<D>(l, idx.getScale()) and not onUnitcell) {
+                    MWNode<D> &fNode = this->fTree->getNode(idx);
+                    idx_band.push_back(idx);
+                    band->push_back(&fNode);
+                }
+            } else if (oper_scale < 0) {
+                if (periodic::in_unit_cell<D>(l, idx.getScale()) and onUnitcell) {
+                    MWNode<D> &fNode = this->fTree->getNode(idx);
+                    idx_band.push_back(idx);
+                    band->push_back(&fNode);
+                }
+                if (not onUnitcell) { MSG_ABORT("Cannot do with negative operator scale"); }
+            } else {
+                MSG_ABORT("Cannot manipulate operators with positive operator scale");
+            }
+        }
         l[dim]++;
     }
     l[dim] = l_start;
@@ -259,7 +286,7 @@ template <int D> void ConvolutionCalculator<D>::applyOperComp(OperatorState<D> &
     for (int i = 0; i < this->oper->size(); i++) {
         const OperatorTree &ot = this->oper->getComponent(i);
         const BandWidth &bw = ot.getBandWidth();
-        if (os.getMaxDeltaL() > bw.getMaxWidth(depth)) { continue; }
+        if (os.getMaxDeltaL() > bw.getMaxWidth(o_depth)) { continue; }
         os.oTree = &ot;
         os.fThreshold = getBandSizeFactor(i, depth, os) * fNorm;
         applyOperator(os);

@@ -100,6 +100,7 @@ public:
     const MWNode<D> &getEndMWNode(int i) const { return *this->endNodeTable[i]; }
     const MWNode<D> &getRootMWNode(int i) const { return this->rootBox.getNode(i); }
 
+    const int getPeriodicOperatorReach() const { return this->MRA.getPeriodicOperatorReach(); }
     void makeNodeTable(MWNodeVector<D> &nodeTable);
     void makeNodeTable(std::vector<MWNodeVector<D>> &nodeTable);
 

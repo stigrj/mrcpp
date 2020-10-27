@@ -218,14 +218,13 @@ template <int D> void SerialFunctionTree<D>::allocParent(MWNode<D> &child) {
     child.parent = parent_p;
     child.parentSerialIx = sIx;
 
-    for (int cIdx = 0; cIdx < child.getTDim(); cIdx++) parent_p->children[cIdx] = nullptr;
-    parent_p->children[0] = &child;
+    for (int cIdx = 0; cIdx < child.getTDim(); cIdx++) parent_p->children[cIdx] = &child;
 
     *(char **)(parent_p) = this->cvptr_ProjectedNode;
     parent_p->tree = child.tree;
     parent_p->parent = nullptr;
 
-    parent_p->nodeIndex = NodeIndex<D>(child.getScale() - 1);
+    parent_p->nodeIndex = NodeIndex<D>(child.getScale() - 1, child.getTranslation());
     parent_p->hilbertPath = HilbertPath<D>();
     parent_p->n_coefs = this->sizeNodeCoeff;
     parent_p->coefs = coefs_p;

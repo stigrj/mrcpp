@@ -404,8 +404,17 @@ template <int D> MWNodeVector<D> *ConvolutionCalculator<D>::getInitialWorkVector
     if (not manipulateOperator) {
         const auto oper_scale = tree.getMRA().getOperatorScale();
         for (auto i = -1; i > oper_scale - 1; i--) {
-            NodeIndex<D> gInx(i);
-            nodeVec->push_back(&tree.getNode(gInx));
+            int l[3];
+            for (int x = -1; x < 1; x++) {
+                l[0] = x;
+                for (int y = -1; y < 1; y++) {
+                    l[1] = y;
+                    for (int z = -1; z < 1; z++) {
+                        l[2] = z;
+                        nodeVec->push_back(&tree.getNode(NodeIndex<D>(i, l)));
+                    }
+                }
+            }
         }
     }
 

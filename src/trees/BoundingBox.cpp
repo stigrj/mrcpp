@@ -28,6 +28,7 @@
 #include "BoundingBox.h"
 #include "utils/Printer.h"
 #include "utils/math_utils.h"
+#include "utils/periodic_utils.h"
 
 namespace mrcpp {
 
@@ -42,9 +43,10 @@ template <int D>
 BoundingBox<D>::BoundingBox(int n,
                             const std::array<int, D> &l,
                             const std::array<int, D> &nb,
-                            const std::array<double, D> &sf)
+                            const std::array<double, D> &sf,
+                            bool pbc)
         : cornerIndex(n, l.data()) {
-    setPeriodic(false);
+    setPeriodic(pbc);
     setNBoxes(nb);
     setScalingFactor(sf);
     setDerivedParameters();
@@ -103,7 +105,6 @@ template <int D> void BoundingBox<D>::setNBoxes(const std::array<int, D> &nb) {
         this->nBoxes[d] = (nb[d] > 0) ? nb[d] : 1;
         this->totBoxes *= this->nBoxes[d];
     }
-    if (this->totBoxes > 1 and isPeriodic()) MSG_ABORT("Total number of boxes must be one for periodic worlds");
 }
 
 template <int D> void BoundingBox<D>::setDerivedParameters() {
@@ -158,16 +159,19 @@ template <int D> NodeIndex<D> BoundingBox<D>::getNodeIndex(int bIdx) const {
 }
 
 // Specialized for D=1 below
-template <int D> int BoundingBox<D>::getBoxIndex(const Coord<D> &r) const {
+template <int D> int BoundingBox<D>::getBoxIndex(Coord<D> r) const {
 
-    if (this->isPeriodic()) return 0;
+    if (this->isPeriodic()) { periodic::coord_manipulation<D>(r, this->getPeriodic()); }
 
     int idx[D];
     for (int d = 0; d < D; d++) {
         double x = r[d];
-        if (x < this->lowerBounds[d]) return -1;
-        if (x >= this->upperBounds[d]) return -1;
+        if (not this->isPeriodic()) {
+            if (x < this->lowerBounds[d]) return -1;
+            if (x >= this->upperBounds[d]) return -1;
+        }
         double div = (x - this->lowerBounds[d]) / this->unitLengths[d];
+        if (this->isPeriodic()) div = (x + 1.0) / 1.0;
         double iint;
         std::modf(div, &iint);
         idx[d] = (int)iint;
@@ -183,11 +187,12 @@ template <int D> int BoundingBox<D>::getBoxIndex(const Coord<D> &r) const {
 }
 
 // Specialized for D=1 below
-template <int D> int BoundingBox<D>::getBoxIndex(const NodeIndex<D> &nIdx) const {
+template <int D> int BoundingBox<D>::getBoxIndex(NodeIndex<D> nIdx) const {
 
-    if (this->isPeriodic()) return 0;
+    if (this->isPeriodic()) { periodic::indx_manipulation<D>(nIdx, this->getPeriodic()); };
 
     int n = nIdx.getScale();
+    if (n < 0 and this->isPeriodic()) n = 0;
     int cn = this->cornerIndex.getScale();
     const int *l = nIdx.getTranslation();
     const int *cl = this->cornerIndex.getTranslation();
@@ -235,9 +240,9 @@ template <int D> std::ostream &BoundingBox<D>::print(std::ostream &o) const {
     return o;
 }
 
-template <> int BoundingBox<1>::getBoxIndex(const Coord<1> &r) const {
+template <> int BoundingBox<1>::getBoxIndex(Coord<1> r) const {
 
-    if (this->isPeriodic()) return 0;
+    if (this->isPeriodic()) { periodic::coord_manipulation<1>(r, this->getPeriodic()); }
 
     double x = r[0];
     if (x < this->lowerBounds[0]) return -1;
@@ -245,7 +250,7 @@ template <> int BoundingBox<1>::getBoxIndex(const Coord<1> &r) const {
     double div = (x - this->lowerBounds[0]) / this->unitLengths[0];
     double iint;
     std::modf(div, &iint);
-    return (int)iint;
+    return static_cast<int>(iint);
 }
 
 template <> NodeIndex<1> BoundingBox<1>::getNodeIndex(int bIdx) const {
@@ -256,9 +261,9 @@ template <> NodeIndex<1> BoundingBox<1>::getNodeIndex(int bIdx) const {
     return nIdx;
 }
 
-template <> int BoundingBox<1>::getBoxIndex(const NodeIndex<1> &nIdx) const {
+template <> int BoundingBox<1>::getBoxIndex(NodeIndex<1> nIdx) const {
 
-    if (this->isPeriodic()) return 0;
+    if (this->isPeriodic()) { periodic::indx_manipulation<1>(nIdx, this->getPeriodic()); };
 
     int n = nIdx.getScale();
     int l = nIdx.getTranslation(0);

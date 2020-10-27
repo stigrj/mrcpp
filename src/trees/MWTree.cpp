@@ -135,10 +135,12 @@ template <int D> void MWTree<D>::mwTransformDown(bool overwrite) {
             int n_nodes = nodeTable[n].size();
 #pragma omp for schedule(guided)
             for (int i = 0; i < n_nodes; i++) {
+                int reverse = 7;
                 MWNode<D> &node = *nodeTable[n][i];
                 if (node.isBranchNode()) {
                     if (this->getRootScale() > node.getScale()) {
-                        node.giveChildCoefs(0, overwrite);
+                        int cIdx = this->getRootBox().getBoxIndex(node.getNodeIndex());
+                        node.giveChildCoefs(reverse - cIdx, overwrite);
                     } else {
                         node.giveChildrenCoefs(overwrite);
                     }
@@ -341,7 +343,7 @@ template <int D> const MWNode<D> &MWTree<D>::getNodeOrEndNode(NodeIndex<D> idx) 
  * This routine ALWAYS returns the node you ask for, and will generate nodes
  * that does not exist. Recursion starts at the appropriate rootNode and
  * decends from this. */
-template <int D> MWNode<D> &MWTree<D>::getNode(const Coord<D> &r, int depth) {
+template <int D> MWNode<D> &MWTree<D>::getNode(Coord<D> r, int depth) {
     MWNode<D> &root = getRootBox().getNode(r);
     if (depth >= 0) {
         return *root.retrieveNode(r, depth);
@@ -402,10 +404,21 @@ template <int D> void MWTree<D>::makeNodeTable(std::vector<MWNodeVector<D>> &nod
     }
 
     int before = this->getNNodes();
-    for (auto i = 0; i < this->nodesAtNegativeDepth.size(); i++) {
-        if (this->nodesAtNegativeDepth[i] < 1) continue;
-        NodeIndex<D> gInx(-(i + 1));
-        nodeTable.insert(nodeTable.begin(), std::vector<MWNode<D> *>{&this->getNode(gInx)});
+    for (auto i = -1; i > -this->nodesAtNegativeDepth.size() - 1; i--) {
+        if (this->nodesAtNegativeDepth[-i - 1] < 1) continue; // Checks if current scale is empty
+        nodeTable.insert(nodeTable.begin(), std::vector<MWNode<D> *>{});
+        int l[3];
+        for (int x = -1; x < 1; x++) {
+            l[0] = x;
+            for (int y = -1; y < 1; y++) {
+                l[1] = y;
+                for (int z = -1; z < 1; z++) {
+                    l[2] = z;
+                    auto &new_node = this->getNode(NodeIndex<D>(i, l));
+                    nodeTable[0].push_back(&new_node);
+                }
+            }
+        }
     }
     int after = this->getNNodes();
     if (before != after) MSG_ABORT("No new nodes should be generated");

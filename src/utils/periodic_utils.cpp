@@ -50,30 +50,43 @@ template <int D> bool in_unit_cell(int translation[D], int scale) {
 template <int D> void indx_manipulation(NodeIndex<D> &idx, const std::array<bool, D> &periodic) {
     if (not periodic[0]) MSG_ABORT("Only for periodic cases!");
 
-    if (idx.getScale() < 0) {
-        idx.setTranslation(nullptr);
-    } else {
-
+    auto scale = idx.getScale();
+    if (scale < 0) {
         int translation[D];
-        int two_n = 1 << idx.getScale();
+        for (auto i = 0; i < D; i++) {
+            if (idx.getTranslation(i) < 0) translation[i] = -1;
+            if (idx.getTranslation(i) >= 0) translation[i] = 0;
+        }
+        idx.setTranslation(translation);
+
+    } else {
+        int translation[D];
+        int two_n = 1 << scale + 1;
 
         for (auto i = 0; i < D; i++) {
-            translation[i] = idx.getTranslation(i);
+            translation[i] = idx.getTranslation(i) + two_n / 2;
             if (periodic[i]) {
                 if (translation[i] >= two_n) translation[i] = translation[i] % two_n;
                 if (translation[i] < 0) translation[i] = (translation[i] + 1) % two_n + two_n - 1;
             }
+            translation[i] -= two_n / 2;
         }
         idx.setTranslation(translation);
     }
 }
 
+// Assuemes a coordiate for a function defined on the [-1, 1] periodic cell.
+// If r[i] is outside the unit-cell the function value is mapped to the unit-cell.
 template <int D> void coord_manipulation(Coord<D> &r, const std::array<bool, D> &periodic) {
     for (auto i = 0; i < D; i++) {
+        r[i] *= 0.5;
+        r[i] += 0.5;
         if (periodic[i]) {
-            if (r[i] > 1.0) r[i] = std::fmod(r[i], 1.0);
+            if (r[i] >= 1.0) r[i] = std::fmod(r[i], 1.0);
             if (r[i] < 0.0) r[i] = std::fmod(r[i], 1.0) + 1.0;
         }
+        r[i] -= 0.5;
+        r[i] /= 0.5;
     }
 }
 

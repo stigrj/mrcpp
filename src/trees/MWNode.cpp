@@ -222,7 +222,13 @@ template <int D> void MWNode<D>::giveParentCoefs(bool overwrite) {
     MWNode<D> node = *this;
     MWNode<D> &parent = getMWParent();
     int kp1_d = this->getKp1_d();
-    for (auto i = 0; i < getTDim(); i++) { parent.setCoefBlock(i, kp1_d, &node.getCoefs()[0]); }
+    if (node.getScale() == 0) {
+        NodeBox<D> &box = this->getMWTree().getRootBox();
+        auto reverse = getTDim() - 1;
+        for (auto i = 0; i < getTDim(); i++) { parent.setCoefBlock(i, kp1_d, &box.getNode(reverse - i).getCoefs()[0]); }
+    } else {
+        for (auto i = 0; i < getTDim(); i++) { parent.setCoefBlock(i, kp1_d, &node.getCoefs()[0]); }
+    }
     parent.mwTransform(Compression);
     parent.setHasCoefs();
     parent.calcNorms();
@@ -1090,7 +1096,6 @@ template <int D> MWNode<D> *MWNode<D>::retrieveNode(const NodeIndex<D> &idx) {
 }
 
 template <int D> MWNode<D> *MWNode<D>::retrieveParent(const NodeIndex<D> &idx) {
-
     if (getScale() < idx.getScale()) MSG_ABORT("Scale can't be lower than index scale.")
     if (getScale() == idx.getScale()) { // we're done
         assert(getNodeIndex() == idx);

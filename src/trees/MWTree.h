@@ -69,6 +69,7 @@ public:
     int getNGenNodes();
     int getRootScale() const { return this->rootBox.getScale(); }
     int getDepth() const { return this->nodesAtDepth.size(); }
+    int getNrNodesAtDepth(int i) const { return this->nodesAtDepth[i]; }
     int getSizeNodes() const;
 
     NodeBox<D> &getRootBox() { return this->rootBox; }
@@ -80,8 +81,8 @@ public:
     void setName(const std::string &n) { this->name = n; }
     const std::string &getName() const { return this->name; }
 
-    int getRootIndex(const Coord<D> &r) const { return this->rootBox.getBoxIndex(r); }
-    int getRootIndex(const NodeIndex<D> &nIdx) const { return this->rootBox.getBoxIndex(nIdx); }
+    int getRootIndex(Coord<D> r) const { return this->rootBox.getBoxIndex(r); }
+    int getRootIndex(NodeIndex<D> nIdx) const { return this->rootBox.getBoxIndex(nIdx); }
 
     MWNode<D> *findNode(NodeIndex<D> nIdx);
     const MWNode<D> *findNode(NodeIndex<D> nIdx) const;
@@ -90,7 +91,7 @@ public:
     MWNode<D> &getNodeOrEndNode(NodeIndex<D> nIdx);
     const MWNode<D> &getNodeOrEndNode(NodeIndex<D> nIdx) const;
 
-    MWNode<D> &getNode(const Coord<D> &r, int depth = -1);
+    MWNode<D> &getNode(Coord<D> r, int depth = -1);
     MWNode<D> &getNodeOrEndNode(Coord<D> r, int depth = -1);
     const MWNode<D> &getNodeOrEndNode(Coord<D> r, int depth = -1) const;
 
@@ -100,7 +101,7 @@ public:
     const MWNode<D> &getEndMWNode(int i) const { return *this->endNodeTable[i]; }
     const MWNode<D> &getRootMWNode(int i) const { return this->rootBox.getNode(i); }
 
-    const int getPeriodicOperatorReach() const { return this->MRA.getPeriodicOperatorReach(); }
+    int getPeriodicOperatorReach() const { return this->MRA.getPeriodicOperatorReach(); }
     void makeNodeTable(MWNodeVector<D> &nodeTable);
     void makeNodeTable(std::vector<MWNodeVector<D>> &nodeTable);
 

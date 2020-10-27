@@ -207,25 +207,27 @@ template <int D> double FunctionTree<D>::integrate() const {
  *       that can be done in OMP parallel.
  */
 template <int D> double FunctionTree<D>::evalf(const Coord<D> &r) const {
+
     // Handle potential scaling
     const auto sf = this->getMRA().getWorldBox().getScalingFactor();
     auto arg = r;
     for (auto i = 0; i < D; i++) arg[i] = arg[i] / sf[i];
 
-    // Adjust for scaling factor included in basis
-    auto coef = 1.0;
-    for (const auto &fac : sf) coef /= std::sqrt(fac);
-
     // The 1.0 appearing in the if tests comes from the period is
     // always 1.0 from the point of view of this function.
     if (this->getRootBox().isPeriodic()) { periodic::coord_manipulation<D>(arg, this->getRootBox().getPeriodic()); }
 
-    // Function is zero outside the domain
-    if (this->outOfBounds(arg)) return 0.0;
+    // Function is zero outside the domain for non-periodic functions
+    if (this->outOfBounds(arg) and not this->getRootBox().isPeriodic()) return 0.0;
 
     const MWNode<D> &mw_node = this->getNodeOrEndNode(arg);
     auto &f_node = static_cast<const FunctionNode<D> &>(mw_node);
     auto result = f_node.evalScaling(arg);
+
+    // Adjust for scaling factor included in basis
+    auto coef = 1.0;
+    for (const auto &fac : sf) coef /= std::sqrt(fac);
+
     return coef * result;
 }
 

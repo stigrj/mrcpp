@@ -174,6 +174,8 @@ TEST_CASE("Apply Periodic Poisson' operator", "[apply_periodic_Poisson], [poisso
     int order = 5;
     InterpolatingBasis basis(order);
     MultiResolutionAnalysis<3> MRA(world, basis, 25);
+    MRA.setPeriodicOperatorReach(10);
+    MRA.setPeriodicOperatorCutOff(9);
 
     PoissonOperator P(MRA, build_prec);
 

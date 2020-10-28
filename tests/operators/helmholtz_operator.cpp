@@ -213,6 +213,8 @@ TEST_CASE("Apply Periodic Helmholtz' operator", "[apply_periodic_helmholtz], [he
 
     InterpolatingBasis basis(order);
     MultiResolutionAnalysis<3> MRA(world, basis, 25);
+    MRA.setPeriodicOperatorReach(10);
+    MRA.setPeriodicOperatorCutOff(9);
 
     auto mu = 4.3;
     HelmholtzOperator H(MRA, mu, build_prec);

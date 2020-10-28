@@ -142,13 +142,16 @@ MWNodeVector<D> *ConvolutionCalculator<D>::makeOperBand(const MWNode<D> &gNode, 
 
     int o_depth = gNode.getScale() - this->oper->getRootScale();
     int g_depth = gNode.getDepth();
-    bool periodic = gNode.getMWTree().getMRA().getWorldBox().isPeriodic();
     int width = this->oper->getMaxBandWidth(o_depth);
+
+    bool periodic = gNode.getMWTree().getMRA().getWorldBox().isPeriodic();
+    int cut_off = gNode.getMWTree().getMRA().getPeriodicOperatorCutOff();
+    int reach = gNode.getMWTree().getMRA().getPeriodicOperatorReach();
+
     if (width >= 0) {
         const NodeBox<D> &fWorld = this->fTree->getRootBox();
         const NodeIndex<D> &cIdx = fWorld.getCornerIndex();
         const NodeIndex<D> &gIdx = gNode.getNodeIndex();
-
         int l_start[D];
         int l_end[D];
         int nbox[D];
@@ -158,8 +161,13 @@ MWNodeVector<D> *ConvolutionCalculator<D>::makeOperBand(const MWNode<D> &gNode, 
             // We need to consider the world borders
             int nboxes = fWorld.size(i) * (1 << g_depth);
             int c_i = cIdx.getTranslation(i) * (1 << g_depth);
-            if (l_start[i] < c_i and !periodic) { l_start[i] = c_i; }
-            if (l_end[i] > c_i + nboxes - 1 and !periodic) { l_end[i] = c_i + nboxes - 1; }
+            if (not periodic) {
+                if (l_start[i] < c_i) { l_start[i] = c_i; }
+                if (l_end[i] > c_i + nboxes - 1) { l_end[i] = c_i + nboxes - 1; }
+            } else {
+                if (l_start[i] < c_i * cut_off) { l_start[i] = c_i * cut_off; }
+                if (l_end[i] > (c_i + nboxes) * cut_off - 1) { l_end[i] = (c_i + nboxes) * cut_off - 1; }
+            }
             nbox[i] = l_end[i] - l_start[i] + 1;
         }
 

@@ -37,6 +37,7 @@ MultiResolutionAnalysis<D>::MultiResolutionAnalysis(const MultiResolutionAnalysi
         , basis(mra.basis)
         , world(mra.world)
         , periodic_operator_reach(mra.periodic_operator_reach)
+        , periodic_cut_off(mra.periodic_cut_off)
         , operator_scale(mra.operator_scale) {
     if (getMaxDepth() > MaxDepth) MSG_ABORT("Beyond MaxDepth");
     if (getMaxScale() > MaxScale) MSG_ABORT("Beyond MaxScale");

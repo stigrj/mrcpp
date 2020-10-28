@@ -63,6 +63,9 @@ public:
     void setPeriodicOperatorReach(int reach) { this->periodic_operator_reach = reach; }
     int getPeriodicOperatorReach() const { return this->periodic_operator_reach; }
 
+    void setPeriodicOperatorCutOff(int periodic_cut_off) { this->periodic_cut_off = periodic_cut_off; }
+    int getPeriodicOperatorCutOff() const { return this->periodic_cut_off; }
+
     void setOperatorScale(int scale) { this->operator_scale = scale; }
     int getOperatorScale() const { return this->operator_scale; }
 
@@ -84,6 +87,7 @@ protected:
     const ScalingBasis basis;
     const BoundingBox<D> world;
     int periodic_operator_reach{2};
+    int periodic_cut_off{1};
     int operator_scale{0};
     double n_gauss_stds{4};
     MWFilter *filter;

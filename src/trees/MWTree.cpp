@@ -307,11 +307,17 @@ template <int D> MWNode<D> *MWTree<D>::findNode(NodeIndex<D> idx) {
  * that does not exist. Recursion starts at the appropriate rootNode and
  * decends from this.*/
 template <int D> MWNode<D> &MWTree<D>::getNode(NodeIndex<D> idx) {
-    if (getRootBox().isPeriodic()) { periodic::indx_manipulation<D>(idx, getRootBox().getPeriodic()); }
+    if (getRootBox().isPeriodic()) periodic::indx_manipulation<D>(idx, getRootBox().getPeriodic());
+
+    MWNode<D> *out = nullptr;
     MWNode<D> &root = getRootBox().getNode(idx);
-    assert(root.isAncestor(idx));
-    if (getRootScale() > idx.getScale()) return *root.retrieveParent(idx);
-    return *root.retrieveNode(idx);
+    if (idx.getScale() < getRootScale()) {
+#pragma omp critical(gen_parent)
+        out = root.retrieveParent(idx);
+    } else {
+        out = root.retrieveNode(idx);
+    }
+    return *out;
 }
 
 /** Find and return the node with the given NodeIndex.

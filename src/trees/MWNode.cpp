@@ -382,140 +382,6 @@ template <int D> void MWNode<D>::threadSafeGenChildren() {
     }
 }
 
-template <int D> void MWNode<D>::threadSafeGenParent() {
-    // set_node_lock caused segmentation errors seldom and randomly -> avoided
-
-    // we make many copies of the genChildren calls
-    // the chance that 2 different nodes are treated in the same copy is small and therefore
-    // the different critical sections will not interfer too much
-    if (this->parent == nullptr or this->lockX != 0) {
-        this->lockX = 1;
-
-        int nCritical = 16;
-        switch (this->serialIx % nCritical) {
-            case 0:
-#pragma omp critical(g0)
-                if (this->parent == nullptr) {
-                    genParent();
-                    giveParentCoefs();
-                }
-                break;
-            case 1:
-#pragma omp critical(g1)
-                if (this->parent == nullptr) {
-                    genParent();
-                    giveParentCoefs();
-                }
-                break;
-            case 2:
-#pragma omp critical(g2)
-                if (this->parent == nullptr) {
-                    genParent();
-                    giveParentCoefs();
-                }
-                break;
-            case 3:
-#pragma omp critical(g3)
-                if (this->parent == nullptr) {
-                    genParent();
-                    giveParentCoefs();
-                }
-                break;
-            case 4:
-#pragma omp critical(g4)
-                if (this->parent == nullptr) {
-                    genParent();
-                    giveParentCoefs();
-                }
-                break;
-            case 5:
-#pragma omp critical(g5)
-                if (this->parent == nullptr) {
-                    genParent();
-                    giveParentCoefs();
-                }
-                break;
-            case 6:
-#pragma omp critical(g6)
-                if (this->parent == nullptr) {
-                    genParent();
-                    giveParentCoefs();
-                }
-                break;
-            case 7:
-#pragma omp critical(g7)
-                if (this->parent == nullptr) {
-                    genParent();
-                    giveParentCoefs();
-                }
-                break;
-            case 8:
-#pragma omp critical(g8)
-                if (this->parent == nullptr) {
-                    genParent();
-                    giveParentCoefs();
-                }
-                break;
-            case 9:
-#pragma omp critical(g9)
-                if (this->parent == nullptr) {
-                    genParent();
-                    giveParentCoefs();
-                }
-                break;
-            case 10:
-#pragma omp critical(g10)
-                if (this->parent == nullptr) {
-                    genParent();
-                    giveParentCoefs();
-                }
-                break;
-            case 11:
-#pragma omp critical(g11)
-                if (this->parent == nullptr) {
-                    genParent();
-                    giveParentCoefs();
-                }
-                break;
-            case 12:
-#pragma omp critical(g12)
-                if (this->parent == nullptr) {
-                    genParent();
-                    giveParentCoefs();
-                }
-                break;
-            case 13:
-#pragma omp critical(g13)
-                if (this->parent == nullptr) {
-                    genParent();
-                    giveParentCoefs();
-                }
-                break;
-            case 14:
-#pragma omp critical(g14)
-                if (this->parent == nullptr) {
-                    genParent();
-                    giveParentCoefs();
-                }
-                break;
-            case 15:
-#pragma omp critical(g15)
-                if (this->parent == nullptr) {
-                    genParent();
-                    giveParentCoefs();
-                }
-                break;
-            default:
-#pragma omp critical
-                if (this->parent == nullptr) {
-                    genParent();
-                    giveParentCoefs();
-                }
-        }
-        this->lockX = 0;
-    }
-}
-
 /** Coefficient-Value transform
  *
  * This routine transforms the scaling coefficients of the node to the
@@ -1095,13 +961,21 @@ template <int D> MWNode<D> *MWNode<D>::retrieveNode(const NodeIndex<D> &idx) {
     return this->children[cIdx]->retrieveNode(idx);
 }
 
+/** Node retriever that ALWAYS returns the requested node.
+ *
+ * WARNING: This routine is NOT thread safe! Must be used within omp critical.
+ *
+ * Recursive routine to find and return the node with a given NodeIndex. This
+ * routine always returns the appropriate node, and will generate nodes that
+ * does not exist. Recursion starts at this node and ASSUMES the requested
+ * node is in fact related to this node. */
 template <int D> MWNode<D> *MWNode<D>::retrieveParent(const NodeIndex<D> &idx) {
-    if (getScale() < idx.getScale()) MSG_ABORT("Scale can't be lower than index scale.")
-    if (getScale() == idx.getScale()) { // we're done
-        assert(getNodeIndex() == idx);
-        return this;
+    if (getScale() < idx.getScale()) MSG_ABORT("Scale error")
+    if (getScale() == idx.getScale()) return this;
+    if (this->parent == nullptr) {
+        genParent();
+        giveParentCoefs();
     }
-    threadSafeGenParent();
     return this->parent->retrieveParent(idx);
 }
 

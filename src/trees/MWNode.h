@@ -222,7 +222,6 @@ protected:
     MWNode<D> *retrieveNodeOrEndNode(const NodeIndex<D> &idx);
 
     void threadSafeGenChildren();
-    void threadSafeGenParent();
     void deleteGenerated();
 
     virtual std::ostream &print(std::ostream &o) const;

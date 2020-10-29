@@ -419,7 +419,9 @@ template <int D> MWNodeVector<D> *ConvolutionCalculator<D>::getInitialWorkVector
                     l[1] = y;
                     for (int z = -1; z < 1; z++) {
                         l[2] = z;
-                        nodeVec->push_back(&tree.getNode(NodeIndex<D>(i, l)));
+                        NodeIndex<D> idx(i, l);
+                        nodeVec->push_back(&tree.getNode(idx));
+                        this->fTree->getNode(idx); // Generate necessary parents in input
                     }
                 }
             }

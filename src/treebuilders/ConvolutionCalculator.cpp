@@ -159,11 +159,11 @@ MWNodeVector<D> *ConvolutionCalculator<D>::makeOperBand(const MWNode<D> &gNode, 
             l_start[i] = gIdx.getTranslation(i) - width;
             l_end[i] = gIdx.getTranslation(i) + width;
             // We need to consider the world borders
-            int nboxes = fWorld.size(i) * (1 << g_depth);
-            int c_i = cIdx.getTranslation(i) * (1 << g_depth);
+            int nboxes = fWorld.size(i) * (1 << o_depth);
+            int c_i = cIdx.getTranslation(i) * (1 << o_depth);
             if (not periodic) {
-                if (l_start[i] < c_i) { l_start[i] = c_i; }
-                if (l_end[i] > c_i + nboxes - 1) { l_end[i] = c_i + nboxes - 1; }
+                if (l_start[i] < c_i) l_start[i] = c_i;
+                if (l_end[i] > c_i + nboxes - 1) l_end[i] = c_i + nboxes - 1;
             } else {
                 if (l_start[i] < c_i * cut_off) { l_start[i] = c_i * cut_off; }
                 if (l_end[i] > (c_i + nboxes) * cut_off - 1) { l_end[i] = (c_i + nboxes) * cut_off - 1; }

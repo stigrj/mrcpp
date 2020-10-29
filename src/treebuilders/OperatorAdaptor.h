@@ -36,17 +36,15 @@ public:
 
 protected:
     bool splitNode(const MWNode<2> &node) const override {
-
         const int *l = node.getTranslation();
         bool chkTransl = (l[0] == 0 or l[1] == 0);
-        bool chkScale = (node.getScale() < 0);
 
         bool chkCompNorm = false;
         for (int i = 1; i < 4; i++) {
             if (node.getComponentNorm(i) > 0.0) chkCompNorm = true;
         }
 
-        return chkTransl and (chkScale or chkCompNorm);
+        return chkTransl and chkCompNorm;
     }
 };
 

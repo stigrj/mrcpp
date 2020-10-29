@@ -61,7 +61,7 @@ template <int D> void indx_manipulation(NodeIndex<D> &idx, const std::array<bool
 
     } else {
         int translation[D];
-        int two_n = 1 << scale + 1;
+        int two_n = 1 << (scale + 1);
 
         for (auto i = 0; i < D; i++) {
             translation[i] = idx.getTranslation(i) + two_n / 2;

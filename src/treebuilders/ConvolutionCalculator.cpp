@@ -64,6 +64,7 @@ template <int D> ConvolutionCalculator<D>::~ConvolutionCalculator() {
 template <int D> void ConvolutionCalculator<D>::initTimers() {
     int nThreads = mrcpp_get_max_threads();
     for (int i = 0; i < nThreads; i++) {
+        this->work_vec.push_back(new std::vector<OperatorState<D>>());
         this->band_t.push_back(new Timer(false));
         this->calc_t.push_back(new Timer(false));
         this->norm_t.push_back(new Timer(false));
@@ -73,10 +74,12 @@ template <int D> void ConvolutionCalculator<D>::initTimers() {
 template <int D> void ConvolutionCalculator<D>::clearTimers() {
     int nThreads = mrcpp_get_max_threads();
     for (int i = 0; i < nThreads; i++) {
+        delete this->work_vec[i];
         delete this->band_t[i];
         delete this->calc_t[i];
         delete this->norm_t[i];
     }
+    this->work_vec.clear();
     this->band_t.clear();
     this->calc_t.clear();
     this->norm_t.clear();
@@ -194,9 +197,12 @@ template <int D> void ConvolutionCalculator<D>::calcNode(MWNode<D> &node) {
     auto &gNode = static_cast<FunctionNode<D> &>(node);
     gNode.zeroCoefs();
 
+    this->work_vec[0]->clear();
+
     int depth = gNode.getDepth();
-    double tmpCoefs[gNode.getNCoefs()];
-    OperatorState<D> os(gNode, tmpCoefs);
+
+    // double tmpCoefs[gNode.getNCoefs()];
+    OperatorState<D> os(gNode);
     this->operStat.incrementGNodeCounters(gNode);
 
     // Get all nodes in f within the bandwith of O in g
@@ -234,6 +240,28 @@ template <int D> void ConvolutionCalculator<D>::calcNode(MWNode<D> &node) {
         }
     }
     this->calc_t[mrcpp_get_thread_num()]->stop();
+
+    Timer timer;
+#pragma omp parallel num_threads(mrcpp_get_num_threads())
+    for (auto &os : *work_vec[0]) {
+        int rank = mrcpp_get_thread_num();
+        int size = mrcpp_get_num_threads();
+        if (os.gt % size == rank) tensorApplyOperComp(os);
+    }
+    /*
+    static int p = 0, ntot=0;
+    int id = mrcpp_get_thread_num();
+    ntot += work_vec[0]->size();
+    std::stringstream txt;
+    txt << " "
+        << std::setw(4) << p++
+        << "  "
+        << std::setw(10) << work_vec[0]->size()
+        << "  "
+        << std::setw(10) << ntot;
+    print::time(0, txt.str(), timer);
+    work_vec[0]->clear();
+    */
 
     this->norm_t[mrcpp_get_thread_num()]->resume();
     gNode.calcNorms();
@@ -287,7 +315,8 @@ template <int D> void ConvolutionCalculator<D>::applyOperator(OperatorState<D> &
     double upperBound = oNorm * os.fThreshold;
     if (upperBound > os.gThreshold) {
         this->operStat.incrementFNodeCounters(fNode, os.ft, os.gt);
-        tensorApplyOperComp(os);
+        this->work_vec[0]->push_back(os);
+        // tensorApplyOperComp(os);
     }
 }
 
@@ -333,6 +362,16 @@ template <int D> void ConvolutionCalculator<D>::tensorApplyOperComp(OperatorStat
         }
     }
 #else
+    double tmp[8*os.kp1_d];
+    double *scr1 = tmp;
+    double *scr2 = scr1 + os.kp1_d;
+    for (int i = 1; i < D; i++) {
+        if (IS_ODD(i)) {
+            os.aux[i] = scr2;
+        } else {
+            os.aux[i] = scr1;
+        }
+    }
     for (int i = 0; i < D; i++) {
         Eigen::Map<MatrixXd> f(aux[i], os.kp1, os.kp1_dm1);
         Eigen::Map<MatrixXd> g(aux[i + 1], os.kp1_dm1, os.kp1);

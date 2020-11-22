@@ -37,10 +37,10 @@ public:
     virtual MWNodeVector<D> *getInitialWorkVector(MWTree<D> &tree) const { return tree.copyEndNodeTable(); }
 
     virtual void calcNodeVector(MWNodeVector<D> &nodeVec) {
-#pragma omp parallel shared(nodeVec) num_threads(mrcpp_get_num_threads())
+// #pragma omp parallel shared(nodeVec) num_threads(mrcpp_get_num_threads())
         {
             int nNodes = nodeVec.size();
-#pragma omp for schedule(guided)
+// #pragma omp for schedule(guided)
             for (int n = 0; n < nNodes; n++) {
                 MWNode<D> &node = *nodeVec[n];
                 calcNode(node);

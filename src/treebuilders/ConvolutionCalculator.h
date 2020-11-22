@@ -27,6 +27,7 @@
 
 #include "TreeCalculator.h"
 #include "operators/OperatorStatistics.h"
+#include "operators/OperatorState.h"
 #include "trees/FunctionTreeVector.h"
 
 #include "MRCPP/mrcpp_declarations.h"
@@ -52,6 +53,8 @@ private:
     std::vector<Timer *> band_t;
     std::vector<Timer *> calc_t;
     std::vector<Timer *> norm_t;
+
+    std::vector<std::vector<OperatorState<D>> *> work_vec;
 
     OperatorStatistics<D> operStat;
     std::vector<Eigen::MatrixXi *> bandSizes;

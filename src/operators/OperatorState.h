@@ -44,7 +44,7 @@ namespace mrcpp {
 
 template <int D> class OperatorState final {
 public:
-    OperatorState(MWNode<D> &gn, double *scr1)
+    OperatorState(MWNode<D> &gn, double *scr1 = 0)
             : gNode(&gn) {
         this->kp1 = this->gNode->getKp1();
         this->kp1_d = this->gNode->getKp1_d();
@@ -53,15 +53,40 @@ public:
         this->gData = this->gNode->getCoefs();
         this->maxDeltaL = -1;
 
-        double *scr2 = scr1 + this->kp1_d;
+        // double *scr2 = scr1 + this->kp1_d;
+        //
+        // for (int i = 1; i < D; i++) {
+        //     if (IS_ODD(i)) {
+        //         this->aux[i] = scr2;
+        //     } else {
+        //         this->aux[i] = scr1;
+        //     }
+        // }
+    }
 
-        for (int i = 1; i < D; i++) {
-            if (IS_ODD(i)) {
-                this->aux[i] = scr2;
-            } else {
-                this->aux[i] = scr1;
-            }
+    OperatorState(const OperatorState<D> &os)
+            : ft(os.ft)
+            , gt(os.gt)
+            , maxDeltaL(0)
+            , fThreshold(0.0)
+            , gThreshold(0.0)
+            , kp1(os.kp1)
+            , kp1_2(os.kp1_2)
+            , kp1_d(os.kp1_d)
+            , kp1_dm1(os.kp1_dm1)
+            , oTree(nullptr)
+            , gNode(nullptr)
+            , fNode(nullptr)
+            , fIdx(nullptr)
+            , gData(os.gData)
+            , fData(os.fData)
+            , oData()
+            , aux() {
+        for (int d = 0; d < D; d++) {
+            oData[d] = os.oData[d];
+            aux[d] = os.aux[d];
         }
+        aux[D] = os.aux[D];
     }
 
     OperatorState(MWNode<D> &gn, std::vector<double> scr1)
@@ -109,10 +134,10 @@ private:
     MWNode<D> *fNode;
     NodeIndex<D> *fIdx;
 
-    double *aux[D + 1];
     double *gData;
     double *fData;
     double *oData[D];
+    double *aux[D + 1];
 
     void calcMaxDeltaL() {
         const auto &gl = this->gNode->getNodeIndex();

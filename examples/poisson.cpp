@@ -7,15 +7,15 @@
 const auto min_scale = -4;
 const auto max_depth = 25;
 
-const auto order = 7;
-const auto prec = 1.0e-5;
+const auto order = 9;
+const auto prec = 1.0e-6;
 
 const auto D = 3;
 int main(int argc, char **argv) {
     auto timer = mrcpp::Timer();
 
     // Initialize printing
-    auto printlevel = 0;
+    auto printlevel = 10;
     mrcpp::Printer::init(printlevel);
     mrcpp::print::environment(0);
     mrcpp::print::header(0, "Applying Poisson operator");
@@ -55,11 +55,16 @@ int main(int argc, char **argv) {
     mrcpp::print::memory(0, "used memory post project");
     t1.stop();
 
+    // println(0, f_tree);
+    // mrcpp::refine_grid(f_tree, 1);
+    // println(0, f_tree);
+
     // Applying Poisson operator
     auto t2 = mrcpp::Timer();
     mrcpp::print::separator(0, ' ');
     mrcpp::print::memory(0, "used memory pre apply");
     mrcpp::FunctionTree<D> g_tree(MRA);
+    // mrcpp::build_grid(g_tree, f_tree);
     mrcpp::apply(prec, g_tree, P, f_tree);
     mrcpp::print::memory(0, "used memory post apply");
     t2.stop();

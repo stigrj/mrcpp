@@ -152,4 +152,5 @@ template class MultiResolutionAnalysis<1>;
 template class MultiResolutionAnalysis<2>;
 template class MultiResolutionAnalysis<3>;
 
+template class MultiResolutionAnalysis<6>;
 } // namespace mrcpp

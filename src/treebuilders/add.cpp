@@ -156,6 +156,14 @@ template void add<3>(double prec,
                      FunctionTree<3> &tree_b,
                      int maxIter,
                      bool absPrec);
+template void add<6>(double prec,
+                     FunctionTree<6> &out,
+                     double a,
+                     FunctionTree<6> &tree_a,
+                     double b,
+                     FunctionTree<6> &tree_b,
+                     int maxIter,
+                     bool absPrec);
 
 template void add<1>(double prec,
                      FunctionTree<1> &out,
@@ -172,6 +180,11 @@ template void add<3>(double prec,
                      FunctionTreeVector<3> &inp,
                      int maxIter,
                      bool absPrec);
+template void add<6>(double prec,
+                     FunctionTree<6> &out,
+                     FunctionTreeVector<6> &inp,
+                     int maxIter,
+                     bool absPrec);
 
 template void add<1>(double prec,
                      FunctionTree<1> &out,
@@ -186,6 +199,11 @@ template void add<2>(double prec,
 template void add<3>(double prec,
                      FunctionTree<3> &out,
                      std::vector<FunctionTree<3> *> &inp,
+                     int maxIter,
+                     bool absPrec);
+template void add<6>(double prec,
+                     FunctionTree<6> &out,
+                     std::vector<FunctionTree<6> *> &inp,
                      int maxIter,
                      bool absPrec);
 

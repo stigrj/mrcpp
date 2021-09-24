@@ -297,7 +297,7 @@ template <int D> void MWNode<D>::cvTransform(int operation) {
 
     auto sb = this->getMWTree().getMRA().getScalingBasis();
     const MatrixXd &S = sb.getCVMap(operation);
-    double o_vec[nCoefs];
+    double *o_vec = new double[nCoefs];
     double *out_vec = o_vec;
     double *in_vec = this->coefs;
 
@@ -329,6 +329,7 @@ template <int D> void MWNode<D>::cvTransform(int operation) {
     } else {
         for (int i = 0; i < nCoefs; i++) { this->coefs[i] *= two_fac; }
     }
+    delete[] o_vec;
 }
 /* Old interpolating version, somewhat faster
 template<int D>
@@ -404,7 +405,7 @@ template <int D> void MWNode<D>::mwTransform(int operation) {
     const MWFilter &filter = getMWTree().getMRA().getFilter();
     double overwrite = 0.0;
 
-    double o_vec[nCoefs];
+    double *o_vec = new double[nCoefs];
     double *out_vec = o_vec;
     double *in_vec = this->coefs;
 
@@ -433,6 +434,7 @@ template <int D> void MWNode<D>::mwTransform(int operation) {
     if (IS_ODD(D)) {
         for (int i = 0; i < nCoefs; i++) { this->coefs[i] = in_vec[i]; }
     }
+    delete[] o_vec;
 }
 
 /** Set all norms to Undefined. */

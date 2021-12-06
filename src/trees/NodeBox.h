@@ -40,6 +40,7 @@ public:
 
     void setNode(int idx, MWNode<D> **node);
     void clearNode(int idx) { this->nodes[idx] = nullptr; }
+    void deleteNode(int idx);
 
     MWNode<D> &getNode(NodeIndex<D> idx);
     MWNode<D> &getNode(Coord<D> r);

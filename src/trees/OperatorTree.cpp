@@ -45,12 +45,32 @@ OperatorTree::OperatorTree(const MultiResolutionAnalysis<2> &mra, double np, con
 
     int nodesPerChunk = 1024;
     int coefsPerNode = this->getTDim() * this->getKp1_d();
-    this->nodeAllocator_p = std::make_unique<NodeAllocator<2>>(this, nullptr, coefsPerNode, nodesPerChunk);
-    this->allocRootNodes();
+    if (this->useAllocator()) {
+        this->nodeAllocator_p = std::make_unique<NodeAllocator<2>>(this, nullptr, coefsPerNode, nodesPerChunk);
+        this->allocRootBank();
+    } else {
+        this->allocRootNoBank();
+    }
     this->resetEndNodeTable();
 }
 
-void OperatorTree::allocRootNodes() {
+void OperatorTree::allocRootNoBank() {
+    auto &rootbox = this->getRootBox();
+    MWNode<2> **roots = rootbox.getNodes();
+    for (int rIdx = 0; rIdx < rootbox.size(); rIdx++) {
+        auto root_p = new OperatorNode(this, rIdx);
+        root_p->allocCoefs(this->getTDim(), this->getKp1_d());
+        root_p->zeroCoefs();
+        root_p->setIsRootNode();
+        root_p->setIsLeafNode();
+        root_p->setIsEndNode();
+
+        this->incrementNodeCount(root_p->getScale());
+        roots[rIdx] = root_p;
+    }
+}
+
+void OperatorTree::allocRootBank() {
     auto &allocator = this->getNodeAllocator();
     auto &rootbox = this->getRootBox();
 

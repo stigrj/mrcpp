@@ -82,19 +82,24 @@ template <int D> void testGeneratedNodes() {
     FunctionTree<D> tree(*mra);
     tree.setZero();
 
-    THEN("there are no GenNodes") { REQUIRE(tree.getNGenNodes() == 0); }
+    // Cannot count GenNodes without allocator
+    if (tree.useAllocator()) {
+        THEN("there are no GenNodes") { REQUIRE(tree.getNGenNodes() == 0); }
 
-    WHEN("a non-existing node is fetched") {
-        MWNode<D> &node = tree.getNode(r, depth);
+        WHEN("a non-existing node is fetched") {
+            MWNode<D> &node = tree.getNode(r, depth);
 
-        THEN("there will be allocated GenNodes") {
-            REQUIRE(tree.getNGenNodes() > 0);
+            THEN("there will be allocated GenNodes") {
+                REQUIRE(tree.getNGenNodes() > 0);
 
-            AND_WHEN("the GenNodes are deleted") {
-                tree.deleteGenerated();
-                THEN("there will be no GenNodes") { REQUIRE(tree.getNGenNodes() == 0); }
+                AND_WHEN("the GenNodes are deleted") {
+                    tree.deleteGenerated();
+                    THEN("there will be no GenNodes") { REQUIRE(tree.getNGenNodes() == 0); }
+                }
             }
         }
+    } else {
+        REQUIRE(tree.getNGenNodes() < 0);
     }
     finalize(&mra);
 }

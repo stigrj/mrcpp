@@ -39,7 +39,11 @@ void OperatorNode::dealloc() {
     this->parentSerialIx = -1;
     this->childSerialIx = -1;
     this->tree->decrementNodeCount(this->getScale());
-    this->tree->getNodeAllocator().dealloc(sIdx);
+    if (this->tree->useAllocator()) {
+        this->tree->getNodeAllocator().dealloc(sIdx);
+    } else {
+        this->freeCoefs();
+    }
 }
 
 /** Calculate one specific component norm of the OperatorNode.
@@ -73,7 +77,24 @@ double OperatorNode::calcComponentNorm(int i) const {
     return norm;
 }
 
-void OperatorNode::createChildren(bool coefs) {
+void OperatorNode::createChildrenNoBank(bool coefs) {
+    if (this->isBranchNode()) MSG_ABORT("Node already has children");
+
+    int nChildren = this->getTDim();
+    for (int cIdx = 0; cIdx < nChildren; cIdx++) {
+        auto child_p = new OperatorNode(this, cIdx);
+        if (coefs) child_p->allocCoefs(this->getTDim(), this->getKp1_d());
+        child_p->zeroCoefs();
+        child_p->setIsLeafNode();
+        child_p->setIsEndNode();
+        this->getMWTree().incrementNodeCount(child_p->getScale());
+        this->children[cIdx] = child_p;
+    }
+    this->setIsBranchNode();
+    this->clearIsEndNode();
+}
+
+void OperatorNode::createChildrenBank(bool coefs) {
     if (this->isBranchNode()) MSG_ABORT("Node already has children");
     auto &allocator = this->getOperTree().getNodeAllocator();
 
@@ -111,7 +132,12 @@ void OperatorNode::createChildren(bool coefs) {
     this->clearIsEndNode();
 }
 
-void OperatorNode::genChildren() {
+void OperatorNode::genChildrenNoBank() {
+    this->createChildrenNoBank(true);
+    this->giveChildrenCoefsNoBank();
+}
+
+void OperatorNode::genChildrenBank() {
     this->createChildren(true);
     this->giveChildrenCoefs();
 }

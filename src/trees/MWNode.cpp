@@ -138,7 +138,6 @@ template <int D> void MWNode<D>::dealloc() {
 template <int D> void MWNode<D>::allocCoefs(int n_blocks, int block_size) {
     if (this->n_coefs != 0) MSG_ABORT("n_coefs should be zero");
     if (this->isAllocated()) MSG_ABORT("Coefs already allocated");
-    if (not this->isLooseNode()) MSG_ABORT("Only loose nodes here!");
 
     this->n_coefs = n_blocks * block_size;
     this->coefs = new double[this->n_coefs];
@@ -149,8 +148,6 @@ template <int D> void MWNode<D>::allocCoefs(int n_blocks, int block_size) {
 
 /** Deallocation of coefficients. Only used by loose nodes. */
 template <int D> void MWNode<D>::freeCoefs() {
-    if (not this->isLooseNode()) MSG_ABORT("Only loose nodes here!");
-
     if (this->coefs != nullptr) delete[] this->coefs;
 
     this->coefs = nullptr;
@@ -202,6 +199,14 @@ template <int D> void MWNode<D>::zeroCoefBlock(int block, int block_size) {
 }
 
 template <int D> void MWNode<D>::giveChildrenCoefs(bool overwrite) {
+    if (this->tree->useAllocator()) {
+        this->giveChildrenCoefsBank(overwrite);
+    } else {
+        this->giveChildrenCoefsNoBank(overwrite);
+    }
+}
+
+template <int D> void MWNode<D>::giveChildrenCoefsBank(bool overwrite) {
     assert(this->isBranchNode());
     if (not this->isAllocated()) MSG_ABORT("Not allocated!");
     if (not this->hasCoefs()) MSG_ABORT("No coefficients!");
@@ -223,6 +228,26 @@ template <int D> void MWNode<D>::giveChildrenCoefs(bool overwrite) {
     for (int i = 0; i < getTDim(); i++) {
         getMWChild(i).setHasCoefs();
         getMWChild(i).calcNorms(); // should need to compute only scaling norms
+    }
+}
+
+template <int D> void MWNode<D>::giveChildrenCoefsNoBank(bool overwrite) {
+    MWNode<D> node_i = *this;
+    node_i.mwTransform(Reconstruction);
+
+    int kp1_d = this->getKp1_d();
+    int nChildren = this->getTDim();
+
+    for (int cIdx = 0; cIdx < nChildren; cIdx++) {
+        if (this->children[cIdx] == nullptr) MSG_ABORT("Child does not exist!");
+        MWNode<D> &child = getMWChild(cIdx);
+        if (overwrite) {
+            child.setCoefBlock(0, kp1_d, &node_i.getCoefs()[cIdx * kp1_d]);
+        } else {
+            child.addCoefBlock(0, kp1_d, &node_i.getCoefs()[cIdx * kp1_d]);
+        }
+        child.setHasCoefs();
+        child.calcNorms();
     }
 }
 
@@ -539,14 +564,50 @@ template <int D> bool MWNode<D>::crop(double prec, double splitFac, bool absPrec
 }
 
 template <int D> void MWNode<D>::createChildren(bool coefs) {
+    if (this->tree->useAllocator()) {
+        createChildrenBank(coefs);
+    } else {
+        createChildrenNoBank(coefs);
+    }
+}
+
+template <int D> void MWNode<D>::createChildrenBank(bool coefs) {
+    NOT_REACHED_ABORT;
+}
+
+template <int D> void MWNode<D>::createChildrenNoBank(bool coefs) {
     NOT_REACHED_ABORT;
 }
 
 template <int D> void MWNode<D>::genChildren() {
+    if (this->tree->useAllocator()) {
+        genChildrenBank();
+    } else {
+        genChildrenNoBank();
+    }
+}
+
+template <int D> void MWNode<D>::genChildrenBank() {
+    NOT_REACHED_ABORT;
+}
+
+template <int D> void MWNode<D>::genChildrenNoBank() {
     NOT_REACHED_ABORT;
 }
 
 template <int D> void MWNode<D>::genParent() {
+    if (this->tree->useAllocator()) {
+        genParentBank();
+    } else {
+        genParentNoBank();
+    }
+}
+
+template <int D> void MWNode<D>::genParentBank() {
+    NOT_REACHED_ABORT;
+}
+
+template <int D> void MWNode<D>::genParentNoBank() {
     NOT_REACHED_ABORT;
 }
 
@@ -560,6 +621,7 @@ template <int D> void MWNode<D>::deleteChildren() {
             child.deleteChildren();
             child.dealloc();
         }
+        if (not this->tree->useAllocator()) delete this->children[cIdx];
         this->children[cIdx] = nullptr;
     }
     this->childSerialIx = -1;
@@ -581,7 +643,7 @@ template <int D> void MWNode<D>::deleteGenerated() {
         if (this->isEndNode()) {
             this->deleteChildren();
         } else {
-            for (int cIdx = 0; cIdx < getTDim(); cIdx++) { this->getMWChild(cIdx).deleteGenerated(); }
+            for (int cIdx = 0; cIdx < getTDim(); cIdx++) this->getMWChild(cIdx).deleteGenerated();
         }
     }
 }

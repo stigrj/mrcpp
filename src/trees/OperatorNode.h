@@ -40,8 +40,6 @@ public:
     const OperatorNode &getOperParent() const { return static_cast<const OperatorNode &>(*this->parent); }
     const OperatorNode &getOperChild(int i) const { return static_cast<const OperatorNode &>(*this->children[i]); }
 
-    void createChildren(bool coefs) override;
-    void genChildren() override;
     void deleteChildren() override;
 
     friend class OperatorTree;
@@ -60,6 +58,11 @@ protected:
 
     void dealloc() override;
     double calcComponentNorm(int i) const override;
+
+    void createChildrenNoBank(bool coefs) override;
+    void createChildrenBank(bool coefs) override;
+    void genChildrenNoBank() override;
+    void genChildrenBank() override;
 };
 
 } // namespace mrcpp

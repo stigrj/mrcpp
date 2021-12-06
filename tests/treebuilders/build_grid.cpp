@@ -55,7 +55,6 @@ template <int D> void testBuildGrid() {
             REQUIRE(f_tree.getSquareNorm() == Approx(-1.0));
             REQUIRE(f_tree.getDepth() == 1);
             REQUIRE(f_tree.getNNodes() == f_tree.getNEndNodes());
-            REQUIRE(f_tree.getNGenNodes() == 0);
 
             AND_WHEN("the GridGenerator is given the analytic function") {
                 build_grid(f_tree, *f_func, 2);
@@ -64,7 +63,6 @@ template <int D> void testBuildGrid() {
                     REQUIRE(f_tree.getSquareNorm() == Approx(-1.0));
                     REQUIRE(f_tree.getDepth() == 3);
                     REQUIRE(f_tree.getNNodes() > f_tree.getNEndNodes());
-                    REQUIRE(f_tree.getNGenNodes() == 0);
                 }
             }
         }
@@ -78,7 +76,6 @@ template <int D> void testBuildGrid() {
             REQUIRE(f_tree.getSquareNorm() == Approx(-1.0));
             REQUIRE(f_tree.getDepth() == 3);
             REQUIRE(f_tree.getNNodes() > f_tree.getNEndNodes());
-            REQUIRE(f_tree.getNGenNodes() == 0);
 
             AND_WHEN("the empty tree is passed to the GridGenerator") {
                 FunctionTree<D> g_tree(*mra);
@@ -89,7 +86,6 @@ template <int D> void testBuildGrid() {
                     REQUIRE(g_tree.getDepth() == f_tree.getDepth());
                     REQUIRE(g_tree.getNNodes() == f_tree.getNNodes());
                     REQUIRE(g_tree.getNEndNodes() == f_tree.getNEndNodes());
-                    REQUIRE(g_tree.getNGenNodes() == 0);
                 }
             }
         }

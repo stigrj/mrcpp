@@ -79,6 +79,13 @@ template <int D> void NodeBox<D>::deleteNodes() {
     this->nodes = nullptr;
 }
 
+template <int D> void NodeBox<D>::deleteNode(int idx) {
+    if (this->nodes == nullptr) return;
+    if (this->nodes[idx] == nullptr) return;
+    delete this->nodes[idx];
+    this->nodes[idx] = nullptr;
+}
+
 template <int D> void NodeBox<D>::setNode(int bIdx, MWNode<D> **node) {
     assert(bIdx >= 0);
     assert(bIdx < this->totBoxes);

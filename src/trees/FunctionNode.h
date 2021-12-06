@@ -41,10 +41,6 @@ public:
     const FunctionTree<D> &getFuncTree() const { return static_cast<const FunctionTree<D> &>(*this->tree); }
     const FunctionNode<D> &getFuncParent() const { return static_cast<const FunctionNode<D> &>(*this->parent); }
     const FunctionNode<D> &getFuncChild(int i) const { return static_cast<const FunctionNode<D> &>(*this->children[i]); }
-
-    void createChildren(bool coefs) override;
-    void genChildren() override;
-    void genParent() override;
     void deleteChildren() override;
 
     double integrate() const;
@@ -74,6 +70,13 @@ protected:
 
     void dealloc() override;
     void reCompress() override;
+
+    void createChildrenNoBank(bool coefs) override;
+    void createChildrenBank(bool coefs) override;
+    void genChildrenNoBank() override;
+    void genChildrenBank() override;
+    void genParentBank() override;
+    void genParentNoBank() override;
 
     double integrateLegendre() const;
     double integrateInterpolating() const;

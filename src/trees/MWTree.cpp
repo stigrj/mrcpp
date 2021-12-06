@@ -61,6 +61,7 @@ MWTree<D>::MWTree(const MultiResolutionAnalysis<D> &mra, const std::string &n)
 /** MWTree destructor. */
 template <int D> MWTree<D>::~MWTree() {
     this->endNodeTable.clear();
+    if (this->nNodes != 0) MSG_ERROR("nNodes != 0 -> " << this->nNodes);
     if (this->nodesAtDepth.size() != 1) MSG_ERROR("Nodes at depth != 1 -> " << this->nodesAtDepth.size());
     if (this->nodesAtDepth[0] != 0) MSG_ERROR("Nodes at depth 0 != 0 -> " << this->nodesAtDepth[0]);
 }
@@ -70,7 +71,11 @@ template <int D> void MWTree<D>::deleteRootNodes() {
         MWNode<D> &root = this->getRootMWNode(i);
         root.deleteChildren();
         root.dealloc();
-        this->rootBox.clearNode(i);
+        if (this->useAllocator()) {
+            this->rootBox.clearNode(i);
+        } else {
+            this->rootBox.deleteNode(i);
+        }
     }
 }
 
@@ -189,16 +194,17 @@ template <int D> void MWTree<D>::incrementNodeCount(int scale) {
     if (depth < 0) {
         int n = this->nodesAtNegativeDepth.size();
         if (-depth > n) {
-            for (int i = 0; i < -depth - n; i++) { this->nodesAtNegativeDepth.push_back(0); }
+            for (int i = 0; i < -depth - n; i++) this->nodesAtNegativeDepth.push_back(0);
         }
         this->nodesAtNegativeDepth[-depth - 1]++;
     } else {
         int n = this->nodesAtDepth.size() - 1;
         if (depth > n) {
-            for (int i = 0; i < depth - n; i++) { this->nodesAtDepth.push_back(0); }
+            for (int i = 0; i < depth - n; i++) this->nodesAtDepth.push_back(0);
         }
         this->nodesAtDepth[depth]++;
     }
+    this->nNodes++;
 }
 
 /** Decrement node counters for non-GenNodes. This routine is not thread
@@ -218,6 +224,7 @@ template <int D> void MWTree<D>::decrementNodeCount(int scale) {
         assert(this->nodesAtDepth[depth] >= 0);
         if (this->nodesAtDepth[depth] == 0 and this->nodesAtDepth.size() > 1) this->nodesAtDepth.pop_back();
     }
+    this->nNodes--;
 }
 
 /** @returns Total number of nodes in the tree, at given depth
@@ -391,19 +398,14 @@ template <int D> int MWTree<D>::countLeafNodes(int depth) {
 
 /** Traverse tree and count nodes belonging to this rank. */
 template <int D> int MWTree<D>::countNodes(int depth) {
-    NOT_IMPLEMENTED_ABORT;
-    //    TreeIterator<D> it(*this);
-    //    int count = 0;
-    //    while (it.next()) {
-    //        MWNode<D> &node = it.getNode();
-    //        if (node.isGenNode()) {
-    //            continue;
-    //        }
-    //        if (not node.isForeign()) {
-    //            count++;
-    //        }
-    //    }
-    //    return count;
+    TreeIterator<D> it(*this);
+    int count = 0;
+    while (it.next()) {
+        MWNode<D> &node = it.getNode();
+        if (node.isGenNode()) continue;
+        if (node.getDepth() <= depth) count++;
+    }
+    return count;
 }
 
 /** Traverse tree and count nodes with allocated coefficients. */

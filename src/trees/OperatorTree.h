@@ -60,7 +60,8 @@ protected:
     OperatorNode ***nodePtrStore;  ///< Avoids tree lookups
     OperatorNode ***nodePtrAccess; ///< Center (l=0) of node list
 
-    void allocRootNodes();
+    void allocRootNoBank();
+    void allocRootBank();
     void getMaxTranslations(Eigen::VectorXi &maxTransl);
 
     std::ostream &print(std::ostream &o) const override;

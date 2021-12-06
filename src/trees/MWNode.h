@@ -106,9 +106,9 @@ public:
     void zeroNorms();
     void clearNorms();
 
-    virtual void createChildren(bool coefs);
-    virtual void genChildren();
-    virtual void genParent();
+    void createChildren(bool coefs);
+    void genChildren();
+    void genParent();
     virtual void deleteChildren();
     virtual void deleteParent();
 
@@ -191,7 +191,16 @@ protected:
     double calcScaledWSquareNorm() const { return std::pow(2.0, D * getScale()) * getWaveletNorm(); }
     virtual double calcComponentNorm(int i) const;
 
+    virtual void createChildrenBank(bool coefs);
+    virtual void createChildrenNoBank(bool coefs);
+    virtual void genChildrenBank();
+    virtual void genChildrenNoBank();
+    virtual void genParentBank();
+    virtual void genParentNoBank();
+
     virtual void reCompress();
+    virtual void giveChildrenCoefsBank(bool overwrite = true);
+    virtual void giveChildrenCoefsNoBank(bool overwrite = true);
     virtual void giveChildrenCoefs(bool overwrite = true);
     virtual void giveChildCoefs(int cIdx, bool overwrite = true);
     virtual void giveParentCoefs(bool overwrite = true);

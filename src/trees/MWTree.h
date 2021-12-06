@@ -56,7 +56,7 @@ public:
     int getKp1_d() const { return this->kp1_d; }
     int getDim() const { return D; }
     int getTDim() const { return (1 << D); }
-    int getNNodes() const { return getNodeAllocator().getNNodes(); }
+    int getNNodes() const { return this->nNodes; }
     int getNNegScales() const { return this->nodesAtNegativeDepth.size(); }
     int getRootScale() const { return this->rootBox.getScale(); }
     int getDepth() const { return this->nodesAtDepth.size(); }
@@ -109,6 +109,8 @@ public:
 
     void makeMaxSquareNorms(); // sets values for maxSquareNorm and maxWSquareNorm in all nodes
 
+    void setUseAllocator(bool use) { this->use_allocator = use; }
+    bool useAllocator() const { return this->use_allocator; }
     NodeAllocator<D> &getNodeAllocator() { return *this->nodeAllocator_p; }
     const NodeAllocator<D> &getNodeAllocator() const { return *this->nodeAllocator_p; }
 
@@ -131,9 +133,11 @@ protected:
     // Parameters that are dynamic and can be set by user
     std::string name;
 
+    bool use_allocator{false};
     std::unique_ptr<NodeAllocator<D>> nodeAllocator_p{nullptr};
 
     // Tree data
+    int nNodes{0};
     double squareNorm;
     NodeBox<D> rootBox;                    ///< The actual container of nodes
     MWNodeVector<D> endNodeTable;          ///< Final projected nodes

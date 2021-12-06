@@ -56,13 +56,32 @@ FunctionTree<D>::FunctionTree(const MultiResolutionAnalysis<D> &mra, SharedMemor
     int nodesPerChunk = 64;
     int coefsGenNodes = this->getKp1_d();
     int coefsRegNodes = this->getTDim() * this->getKp1_d();
-    this->nodeAllocator_p = std::make_unique<NodeAllocator<D>>(this, sh_mem, coefsRegNodes, nodesPerChunk);
-    this->genNodeAllocator_p = std::make_unique<NodeAllocator<D>>(this, nullptr, coefsGenNodes, nodesPerChunk);
-    this->allocRootNodes();
+    if (this->useAllocator()) {
+        this->nodeAllocator_p = std::make_unique<NodeAllocator<D>>(this, sh_mem, coefsRegNodes, nodesPerChunk);
+        this->genNodeAllocator_p = std::make_unique<NodeAllocator<D>>(this, nullptr, coefsGenNodes, nodesPerChunk);
+        allocRootBank();
+    } else {
+        allocRootNoBank();
+    }
     this->resetEndNodeTable();
 }
 
-template <int D> void FunctionTree<D>::allocRootNodes() {
+template <int D> void FunctionTree<D>::allocRootNoBank() {
+    auto &rootbox = this->getRootBox();
+    MWNode<D> **roots = rootbox.getNodes();
+    for (int rIdx = 0; rIdx < rootbox.size(); rIdx++) {
+        auto root_p = new FunctionNode<D>(this, rIdx);
+        root_p->allocCoefs(this->getTDim(), this->getKp1_d());
+        root_p->zeroCoefs();
+        root_p->setIsRootNode();
+        root_p->setIsLeafNode();
+        root_p->setIsEndNode();
+        this->incrementNodeCount(root_p->getScale());
+        roots[rIdx] = root_p;
+    }
+}
+
+template <int D> void FunctionTree<D>::allocRootBank() {
     auto &allocator = this->getNodeAllocator();
     auto &rootbox = this->getRootBox();
 
@@ -108,6 +127,7 @@ template <int D> FunctionTree<D>::~FunctionTree() {
  * @param[in] file: File name, will get ".tree" extension
  */
 template <int D> void FunctionTree<D>::saveTree(const std::string &file) {
+    if (!this->useAllocator()) MSG_ABORT("Cannot save trees without allocator");
     Timer t1;
     this->deleteGenerated();
     auto &allocator = this->getNodeAllocator();
@@ -137,6 +157,7 @@ template <int D> void FunctionTree<D>::saveTree(const std::string &file) {
  * @note This tree must have the exact same MRA the one that was saved
  */
 template <int D> void FunctionTree<D>::loadTree(const std::string &file) {
+    if (!this->useAllocator()) MSG_ABORT("Cannot laod trees without allocator");
     Timer t1;
     std::stringstream fname;
     fname << file << ".tree";
@@ -265,7 +286,7 @@ template<int D> double FunctionTree<D>::evalf_precise(const Coord<D> &r) {
  *
  */
 template <int D> void FunctionTree<D>::square() {
-    if (this->getNGenNodes() != 0) MSG_ABORT("GenNodes not cleared");
+    this->deleteGenerated();
 
 #pragma omp parallel num_threads(mrcpp_get_num_threads())
     {
@@ -296,7 +317,7 @@ template <int D> void FunctionTree<D>::square() {
  *
  */
 template <int D> void FunctionTree<D>::power(double p) {
-    if (this->getNGenNodes() != 0) MSG_ABORT("GenNodes not cleared");
+    this->deleteGenerated();
 
 #pragma omp parallel num_threads(mrcpp_get_num_threads())
     {
@@ -327,7 +348,7 @@ template <int D> void FunctionTree<D>::power(double p) {
  *
  */
 template <int D> void FunctionTree<D>::rescale(double c) {
-    if (this->getNGenNodes() != 0) MSG_ABORT("GenNodes not cleared");
+    this->deleteGenerated();
 #pragma omp parallel firstprivate(c) num_threads(mrcpp_get_num_threads())
     {
         int nNodes = this->getNEndNodes();
@@ -347,7 +368,7 @@ template <int D> void FunctionTree<D>::rescale(double c) {
 
 /** @brief In-place rescaling by a function norm \f$ ||f||^{-1} \f$, fixed grid */
 template <int D> void FunctionTree<D>::normalize() {
-    if (this->getNGenNodes() != 0) MSG_ABORT("GenNodes not cleared");
+    this->deleteGenerated();
     double sq_norm = this->getSquareNorm();
     if (sq_norm < 0.0) MSG_ERROR("Normalizing uninitialized function");
     this->rescale(1.0 / std::sqrt(sq_norm));
@@ -364,7 +385,7 @@ template <int D> void FunctionTree<D>::normalize() {
  */
 template <int D> void FunctionTree<D>::add(double c, FunctionTree<D> &inp) {
     if (this->getMRA() != inp.getMRA()) MSG_ABORT("Incompatible MRA");
-    if (this->getNGenNodes() != 0) MSG_ABORT("GenNodes not cleared");
+    this->deleteGenerated();
 #pragma omp parallel firstprivate(c) shared(inp) num_threads(mrcpp_get_num_threads())
     {
         int nNodes = this->getNEndNodes();
@@ -392,7 +413,7 @@ template <int D> void FunctionTree<D>::add(double c, FunctionTree<D> &inp) {
  *
  */
 template <int D> void FunctionTree<D>::absadd(double c, FunctionTree<D> &inp) {
-    if (this->getNGenNodes() != 0) MSG_ABORT("GenNodes not cleared");
+    this->deleteGenerated();
 #pragma omp parallel firstprivate(c) shared(inp) num_threads(mrcpp_get_num_threads())
     {
         int nNodes = this->getNEndNodes();
@@ -428,7 +449,7 @@ template <int D> void FunctionTree<D>::absadd(double c, FunctionTree<D> &inp) {
  */
 template <int D> void FunctionTree<D>::multiply(double c, FunctionTree<D> &inp) {
     if (this->getMRA() != inp.getMRA()) MSG_ABORT("Incompatible MRA");
-    if (this->getNGenNodes() != 0) MSG_ABORT("GenNodes not cleared");
+    this->deleteGenerated();
 #pragma omp parallel firstprivate(c) shared(inp) num_threads(mrcpp_get_num_threads())
     {
         int nNodes = this->getNEndNodes();
@@ -462,7 +483,7 @@ template <int D> void FunctionTree<D>::multiply(double c, FunctionTree<D> &inp) 
  *
  */
 template <int D> void FunctionTree<D>::map(FMap fmap) {
-    if (this->getNGenNodes() != 0) MSG_ABORT("GenNodes not cleared");
+    this->deleteGenerated();
     {
         int nNodes = this->getNEndNodes();
 #pragma omp parallel for schedule(guided) num_threads(mrcpp_get_num_threads())
@@ -482,7 +503,7 @@ template <int D> void FunctionTree<D>::map(FMap fmap) {
 }
 
 template <int D> void FunctionTree<D>::getEndValues(VectorXd &data) {
-    if (this->getNGenNodes() != 0) MSG_ABORT("GenNodes not cleared");
+    this->deleteGenerated();
     int nNodes = this->getNEndNodes();
     int nCoefs = this->getTDim() * this->getKp1_d();
     data = VectorXd::Zero(nNodes * nCoefs);
@@ -498,7 +519,7 @@ template <int D> void FunctionTree<D>::getEndValues(VectorXd &data) {
 }
 
 template <int D> void FunctionTree<D>::setEndValues(VectorXd &data) {
-    if (this->getNGenNodes() != 0) MSG_ABORT("GenNodes not cleared");
+    this->deleteGenerated();
     int nNodes = this->getNEndNodes();
     int nCoefs = this->getTDim() * this->getKp1_d();
     for (int i = 0; i < nNodes; i++) {
@@ -539,7 +560,8 @@ template <int D> int FunctionTree<D>::crop(double prec, double splitFac, bool ab
         MWNode<D> &root = this->getRootMWNode(i);
         root.crop(prec, splitFac, absPrec);
     }
-    int nChunks = this->getNodeAllocator().compress();
+    int nChunks = 0;
+    if (this->useAllocator()) nChunks = this->getNodeAllocator().compress();
     this->resetEndNodeTable();
     this->calcSquareNorm();
     return nChunks;

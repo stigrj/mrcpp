@@ -199,7 +199,23 @@ template <int D> void FunctionNode<D>::getAbsCoefs(double *absCoefs) {
     this->coefs = coefsTmp; // restore original array (same address)
 }
 
-template <int D> void FunctionNode<D>::createChildren(bool coefs) {
+template <int D> void FunctionNode<D>::createChildrenNoBank(bool coefs) {
+    if (this->isBranchNode()) MSG_ABORT("Node already has children");
+
+    int nChildren = this->getTDim();
+    for (int cIdx = 0; cIdx < nChildren; cIdx++) {
+        auto child_p = new FunctionNode<D>(this, cIdx);
+        if (coefs) child_p->allocCoefs(this->getTDim(), this->getKp1_d());
+        child_p->setIsLeafNode();
+        child_p->setIsEndNode();
+        this->getMWTree().incrementNodeCount(child_p->getScale());
+        this->children[cIdx] = child_p;
+    }
+    this->setIsBranchNode();
+    this->clearIsEndNode();
+}
+
+template <int D> void FunctionNode<D>::createChildrenBank(bool coefs) {
     if (this->isBranchNode()) MSG_ABORT("Node already has children");
     auto &allocator = this->getFuncTree().getNodeAllocator();
 
@@ -237,7 +253,22 @@ template <int D> void FunctionNode<D>::createChildren(bool coefs) {
     this->clearIsEndNode();
 }
 
-template <int D> void FunctionNode<D>::genChildren() {
+template <int D> void FunctionNode<D>::genChildrenNoBank() {
+    if (this->isBranchNode()) MSG_ABORT("Node already has children");
+    int nChildren = this->getTDim();
+    for (int cIdx = 0; cIdx < nChildren; cIdx++) {
+        auto child_p = new FunctionNode<D>(this, cIdx);
+        child_p->allocCoefs(this->getTDim(), this->getKp1_d());
+        child_p->zeroCoefs();
+        child_p->setIsLeafNode();
+        child_p->setIsGenNode();
+        child_p->clearIsEndNode();
+        this->children[cIdx] = child_p;
+    }
+    this->setIsBranchNode();
+}
+
+template <int D> void FunctionNode<D>::genChildrenBank() {
     if (this->isBranchNode()) MSG_ABORT("Node already has children");
     auto &allocator = this->getFuncTree().getGenNodeAllocator();
 
@@ -274,7 +305,7 @@ template <int D> void FunctionNode<D>::genChildren() {
     this->setIsBranchNode();
 }
 
-template <int D> void FunctionNode<D>::genParent() {
+template <int D> void FunctionNode<D>::genParentBank() {
     if (this->parent != nullptr) MSG_ABORT("Node is not an orphan");
 
     auto &allocator = this->getFuncTree().getNodeAllocator();
@@ -306,6 +337,22 @@ template <int D> void FunctionNode<D>::genParent() {
     this->getMWTree().incrementNodeCount(parent_p->getScale());
 }
 
+template <int D> void FunctionNode<D>::genParentNoBank() {
+    if (this->parent != nullptr) MSG_ABORT("Node is not an orphan");
+
+    // construct into allocator memory
+    auto parent_p = new FunctionNode<D>(this->tree, this->getNodeIndex().parent());
+    parent_p->allocCoefs(this->getTDim(), this->getKp1_d());
+    parent_p->zeroCoefs();
+    parent_p->setIsBranchNode();
+    parent_p->setIsAllocated();
+    parent_p->clearHasCoefs();
+
+    this->getMWTree().incrementNodeCount(parent_p->getScale());
+    for (int cIdx = 0; cIdx < this->getTDim(); cIdx++) parent_p->children[cIdx] = this;
+    this->parent = parent_p;
+}
+
 template <int D> void FunctionNode<D>::deleteChildren() {
     MWNode<D>::deleteChildren();
     this->setIsEndNode();
@@ -317,12 +364,16 @@ template <int D> void FunctionNode<D>::dealloc() {
     this->parentSerialIx = -1;
     this->childSerialIx = -1;
     auto &ftree = this->getFuncTree();
-    if (this->isGenNode()) {
-        ftree.getGenNodeAllocator().dealloc(sIdx);
+    if (ftree.useAllocator()) {
+        if (this->isGenNode()) {
+            ftree.getGenNodeAllocator().dealloc(sIdx);
+        } else {
+            ftree.getNodeAllocator().dealloc(sIdx);
+        }
     } else {
-        ftree.decrementNodeCount(this->getScale());
-        ftree.getNodeAllocator().dealloc(sIdx);
+        this->freeCoefs();
     }
+    if (!this->isGenNode()) ftree.decrementNodeCount(this->getScale());
 }
 
 /** Update the coefficients of the node by a mw transform of the scaling
@@ -333,7 +384,7 @@ template <int D> void FunctionNode<D>::reCompress() {
 }
 
 template <> void FunctionNode<3>::reCompress() {
-    if (this->getDepth() < 0) {
+    if (this->getDepth() < 0 or !this->getMWTree().useAllocator()) {
         // This happens for negative scale pbc operators
         MWNode<3>::reCompress();
     } else if (this->isBranchNode()) {

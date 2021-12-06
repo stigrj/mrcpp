@@ -63,7 +63,7 @@ public:
     double evalf_precise(const Coord<D> &r);
     double evalf(const Coord<D> &r) const override;
 
-    int getNGenNodes() const { return getGenNodeAllocator().getNNodes(); }
+    int getNGenNodes() const { return (this->useAllocator()) ? getGenNodeAllocator().getNNodes() : -1; }
 
     void getEndValues(Eigen::VectorXd &data);
     void setEndValues(Eigen::VectorXd &data);
@@ -106,7 +106,8 @@ protected:
     std::unique_ptr<NodeAllocator<D>> genNodeAllocator_p{nullptr};
     std::ostream &print(std::ostream &o) const override;
 
-    void allocRootNodes();
+    void allocRootBank();
+    void allocRootNoBank();
 };
 
 } // namespace mrcpp

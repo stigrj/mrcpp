@@ -64,6 +64,7 @@ list(APPEND mrcpp_headers
   )
 
 include(${PROJECT_SOURCE_DIR}/external/upstream/fetch_eigen3.cmake)
+include(${PROJECT_SOURCE_DIR}/external/upstream/fetch_hipsycl.cmake)
 
 add_subdirectory(api)
 add_subdirectory(src)

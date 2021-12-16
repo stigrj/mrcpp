@@ -41,6 +41,8 @@ target_link_libraries(mrcpp
     $<BUILD_INTERFACE:$<$<TARGET_EXISTS:MPI::MPI_CXX>:MPI::MPI_CXX>>
   )
 
+add_sycl_to_target(TARGET mrcpp)
+
 add_subdirectory(core)
 add_subdirectory(functions)
 add_subdirectory(operators)

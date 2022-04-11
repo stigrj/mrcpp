@@ -36,6 +36,7 @@
 #include "operators/ConvolutionOperator.h"
 #include "operators/DerivativeOperator.h"
 #include "trees/FunctionTree.h"
+#include "trees/TreeIterator.h"
 #include "utils/Printer.h"
 #include "utils/Timer.h"
 
@@ -70,6 +71,8 @@ template <int D> void apply(double prec, FunctionTree<D> &out, ConvolutionOperat
     Timer pre_t;
     oper.calcBandWidths(prec);
     int maxScale = out.getMRA().getMaxScale();
+    int minScale = oper.getOperatorRoot();
+    int maxDepth = 30;
     WaveletAdaptor<D> adaptor(prec, maxScale, absPrec);
     ConvolutionCalculator<D> calculator(prec, oper, inp);
     pre_t.stop();
@@ -78,9 +81,123 @@ template <int D> void apply(double prec, FunctionTree<D> &out, ConvolutionOperat
 
     Timer post_t;
     oper.clearBandWidths();
+    {
+        Eigen::MatrixXd norms = Eigen::MatrixXd::Zero(maxDepth, 4);
+        TreeIterator<D> it(inp);
+        while (it.nextParent()) {
+            auto &node = it.getNode();
+            int n = node.getScale();
+            if (n == 0) continue;
+            double sfac = std::pow(2.0, 3.0*n);
+            double sq_norm = sfac*node.getSquareNorm();
+            double s_norm = sfac*node.getScalingNorm();
+            double w_norm = sfac*node.getWaveletNorm();
+            norms(n - minScale,0) = n;
+            norms(n - minScale,1) += sq_norm;
+            norms(n - minScale,2) += s_norm;
+            norms(n - minScale,3) += w_norm;
+            // println(0, node);
+        }
+        // println(0, std::endl);
+        it.init(out);
+        while (it.next()) {
+            auto &node = it.getNode();
+            int n = node.getScale();
+            double sq_norm = node.getSquareNorm();
+            double s_norm = node.getScalingNorm();
+            double w_norm = node.getWaveletNorm();
+            norms(n - minScale,0) = n;
+            norms(n - minScale,1) += sq_norm;
+            norms(n - minScale,2) += s_norm;
+            norms(n - minScale,3) += w_norm;
+            // println(0, node);
+        }
+        println(1, "\nINPUT");
+        mrcpp::print::separator(1, '=');
+        println(1, "      Scale             SquareNorm           ScalingNorm         WaveletNorm")
+        mrcpp::print::separator(1, '-');
+        println(1, norms);
+        mrcpp::print::separator(1, '=', 2);
+    }
+    {
+        Eigen::MatrixXd norms = Eigen::MatrixXd::Zero(maxDepth, 4);
+        TreeIterator<D> it(out);
+        while (it.nextParent()) {
+            auto &node = it.getNode();
+            int n = node.getScale();
+            if (n == 0) continue;
+            double sfac = std::pow(2.0, 3.0*n);
+            double sq_norm = sfac*node.getSquareNorm();
+            double s_norm = sfac*node.getScalingNorm();
+            double w_norm = sfac*node.getWaveletNorm();
+            norms(n - minScale,0) = n;
+            norms(n - minScale,1) += sq_norm;
+            norms(n - minScale,2) += s_norm;
+            norms(n - minScale,3) += w_norm;
+            // println(0, node);
+        }
+        // println(0, std::endl);
+        it.init(out);
+        while (it.next()) {
+            auto &node = it.getNode();
+            int n = node.getScale();
+            double sq_norm = node.getSquareNorm();
+            double s_norm = node.getScalingNorm();
+            double w_norm = node.getWaveletNorm();
+            norms(n - minScale,0) = n;
+            norms(n - minScale,1) += sq_norm;
+            norms(n - minScale,2) += s_norm;
+            norms(n - minScale,3) += w_norm;
+            // println(0, node);
+        }
+        println(1, "\nOUTPUT PRE MW TRANSFORM");
+        mrcpp::print::separator(1, '=');
+        println(1, "      Scale             SquareNorm           ScalingNorm         WaveletNorm")
+        mrcpp::print::separator(1, '-');
+        println(1, norms);
+        mrcpp::print::separator(1, '=', 2);
+    }
     out.mwTransform(TopDown, false); // add coarse scale contributions
     out.mwTransform(BottomUp);
     out.calcSquareNorm();
+    {
+        Eigen::MatrixXd norms = Eigen::MatrixXd::Zero(maxDepth, 4);
+        TreeIterator<D> it(out);
+        while (it.nextParent()) {
+            auto &node = it.getNode();
+            int n = node.getScale();
+            if (n == 0) continue;
+            double sfac = std::pow(2.0, 3.0*n);
+            double sq_norm = sfac*node.getSquareNorm();
+            double s_norm = sfac*node.getScalingNorm();
+            double w_norm = sfac*node.getWaveletNorm();
+            norms(n - minScale,0) = n;
+            norms(n - minScale,1) += sq_norm;
+            norms(n - minScale,2) += s_norm;
+            norms(n - minScale,3) += w_norm;
+            // println(0, node);
+        }
+        // println(0, std::endl);
+        it.init(out);
+        while (it.next()) {
+            auto &node = it.getNode();
+            int n = node.getScale();
+            double sq_norm = node.getSquareNorm();
+            double s_norm = node.getScalingNorm();
+            double w_norm = node.getWaveletNorm();
+            norms(n - minScale,0) = n;
+            norms(n - minScale,1) += sq_norm;
+            norms(n - minScale,2) += s_norm;
+            norms(n - minScale,3) += w_norm;
+            // println(0, node);
+        }
+        println(1, "\nOUTPUT POST MW TRANSFORM");
+        mrcpp::print::separator(1, '=');
+        println(1, "      Scale             SquareNorm           ScalingNorm         WaveletNorm")
+        mrcpp::print::separator(1, '-');
+        println(1, norms);
+        mrcpp::print::separator(1, '=', 2);
+    }
     out.deleteGeneratedParents();
     inp.deleteGenerated();
     inp.deleteGeneratedParents();

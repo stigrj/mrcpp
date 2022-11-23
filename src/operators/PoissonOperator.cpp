@@ -52,12 +52,11 @@ PoissonOperator::PoissonOperator(const MultiResolutionAnalysis<3> &mra, double p
     Printer::setPrintLevel(oldlevel);
 }
 
-PoissonOperator::PoissonOperator(const MultiResolutionAnalysis<3> &mra, double prec, int root, int reach)
+PoissonOperator::PoissonOperator(const MultiResolutionAnalysis<3> &mra, double o_prec, int root, int reach, double k_prec, double k_cut)
         : ConvolutionOperator<3>(mra, root, reach) {
     int oldlevel = Printer::setPrintLevel(0);
 
-    double o_prec = prec;
-    double k_prec = prec / 100.0;
+    if (k_prec < 0.0) k_prec = o_prec / 100.0;
     double r_min = this->MRA.calcMinDistance(k_prec);
     double r_max = this->MRA.calcMaxDistance();
 
@@ -67,7 +66,7 @@ PoissonOperator::PoissonOperator(const MultiResolutionAnalysis<3> &mra, double p
     r_max *= (2.0 * this->oper_reach) + 1.0;
 
     PoissonKernel kernel(k_prec, r_min, r_max);
-    initialize(kernel, k_prec, o_prec);
+    initialize(kernel, k_prec, o_prec, k_cut);
 
     Printer::setPrintLevel(oldlevel);
 }

@@ -44,7 +44,7 @@ protected:
     ConvolutionOperator(const MultiResolutionAnalysis<D> &mra, int root, int reach)
         : MWOperator<D>(mra, root, reach) {}
 
-    void initialize(GaussExp<1> &kernel, double k_prec, double o_prec);
+    void initialize(GaussExp<1> &kernel, double k_prec, double o_prec, double k_cut = 0.0);
 
     MultiResolutionAnalysis<1> getKernelMRA() const;
 };

@@ -64,11 +64,12 @@ template <int D> void apply_on_unit_cell(bool inside, double prec, FunctionTree<
  * no coefs).
  *
  */
-template <int D> void apply(double prec, FunctionTree<D> &out, ConvolutionOperator<D> &oper, FunctionTree<D> &inp, int maxIter, bool absPrec) {
+template <int D> void apply(double prec, FunctionTree<D> &out, ConvolutionOperator<D> &oper, FunctionTree<D> &inp, int maxIter, bool absPrec, double bw_prec) {
     if (out.getMRA() != inp.getMRA()) MSG_ABORT("Incompatible MRA");
+    if (bw_prec < 0.0) bw_prec = prec;
 
     Timer pre_t;
-    oper.calcBandWidths(prec);
+    oper.calcBandWidths(bw_prec);
     int maxScale = out.getMRA().getMaxScale();
     WaveletAdaptor<D> adaptor(prec, maxScale, absPrec);
     ConvolutionCalculator<D> calculator(prec, oper, inp);
@@ -370,9 +371,9 @@ template <int D> void divergence(FunctionTree<D> &out, DerivativeOperator<D> &op
     divergence(out, oper, inp_vec);
 }
 
-template void apply<1>(double prec, FunctionTree<1> &out, ConvolutionOperator<1> &oper, FunctionTree<1> &inp, int maxIter, bool absPrec);
-template void apply<2>(double prec, FunctionTree<2> &out, ConvolutionOperator<2> &oper, FunctionTree<2> &inp, int maxIter, bool absPrec);
-template void apply<3>(double prec, FunctionTree<3> &out, ConvolutionOperator<3> &oper, FunctionTree<3> &inp, int maxIter, bool absPrec);
+template void apply<1>(double prec, FunctionTree<1> &out, ConvolutionOperator<1> &oper, FunctionTree<1> &inp, int maxIter, bool absPrec, double bw_prec);
+template void apply<2>(double prec, FunctionTree<2> &out, ConvolutionOperator<2> &oper, FunctionTree<2> &inp, int maxIter, bool absPrec, double bw_prec);
+template void apply<3>(double prec, FunctionTree<3> &out, ConvolutionOperator<3> &oper, FunctionTree<3> &inp, int maxIter, bool absPrec, double bw_prec);
 template void apply<1>(double prec, FunctionTree<1> &out, ConvolutionOperator<1> &oper, FunctionTree<1> &inp, FunctionTreeVector<1> &precTrees, int maxIter, bool absPrec);
 template void apply<2>(double prec, FunctionTree<2> &out, ConvolutionOperator<2> &oper, FunctionTree<2> &inp, FunctionTreeVector<2> &precTrees, int maxIter, bool absPrec);
 template void apply<3>(double prec, FunctionTree<3> &out, ConvolutionOperator<3> &oper, FunctionTree<3> &inp, FunctionTreeVector<3> &precTrees, int maxIter, bool absPrec);

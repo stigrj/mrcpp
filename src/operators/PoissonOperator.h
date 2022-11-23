@@ -42,7 +42,7 @@ namespace mrcpp {
 class PoissonOperator final : public ConvolutionOperator<3> {
 public:
     PoissonOperator(const MultiResolutionAnalysis<3> &mra, double prec);
-    PoissonOperator(const MultiResolutionAnalysis<3> &mra, double prec, int root, int reach = 1);
+    PoissonOperator(const MultiResolutionAnalysis<3> &mra, double prec, int root, int reach = 1, double k_prec = -1.0, double k_cut = 0.0);
     PoissonOperator(const PoissonOperator &oper) = delete;
     PoissonOperator &operator=(const PoissonOperator &oper) = delete;
 };

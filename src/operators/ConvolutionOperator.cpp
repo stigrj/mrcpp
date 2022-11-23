@@ -72,7 +72,7 @@ ConvolutionOperator<D>::ConvolutionOperator(const MultiResolutionAnalysis<D> &mr
 }
 
 template <int D>
-void ConvolutionOperator<D>::initialize(GaussExp<1> &kernel, double k_prec, double o_prec) {
+void ConvolutionOperator<D>::initialize(GaussExp<1> &kernel, double k_prec, double o_prec, double k_cut) {
     auto k_mra = this->getKernelMRA();
     auto o_mra = this->getOperatorMRA();
 
@@ -83,6 +83,7 @@ void ConvolutionOperator<D>::initialize(GaussExp<1> &kernel, double k_prec, doub
         // Rescale Gaussian for D-dim application
         auto *k_func = kernel.getFunc(i).copy();
         k_func->setCoef(std::pow(k_func->getCoef(), 1.0/D));
+        if (k_func->getExp(0) < k_cut) continue;
 
         FunctionTree<1> k_tree(k_mra);
         mrcpp::build_grid(k_tree, *k_func);    // Generate empty grid to hold narrow Gaussian

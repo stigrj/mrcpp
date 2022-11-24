@@ -4,7 +4,7 @@ int order = 5;
 int min_scale = 0;
 int max_depth = 5;
 double prec = 1.0e-1;
-double bond_length = 5.3;
+double bond_length = 2.0*5.3;
 std::string type = "ionic";
 
 void apply_operator(int n,
@@ -13,7 +13,8 @@ void apply_operator(int n,
                     std::vector<mrcpp::FunctionTree<D> *> &g_trees,
                     std::vector<double> &energies) {
     int r = 1;
-    switch (-n) {
+    int shift = 1;
+    switch (-n+shift) {
         case 0:
             r = 32;
             break;
@@ -48,7 +49,7 @@ void apply_operator(int n,
             r = 1;
             break;
     }
-    r = 1;
+    //r = 1;
 
     mrcpp::Timer t0;
     mrcpp::PoissonOperator P(MRA, prec, n, r);
@@ -76,6 +77,7 @@ void apply_operator(int n,
     plt.setRange(A);
 
     // Plot charge
+/*
     {
         mrcpp::FunctionTree<D> f_tmp(MRA);
         mrcpp::copy_grid(f_tmp, *f_tree);
@@ -84,7 +86,8 @@ void apply_operator(int n,
         std::string f_name = "f_tree-" + std::to_string(-n);
         plt.linePlot({10000}, f_tmp, f_name);
     }
-
+*/
+/*
     // Plot potential
     {
         mrcpp::FunctionTree<D> g_tmp(MRA);
@@ -94,7 +97,7 @@ void apply_operator(int n,
         std::string g_name = "g_tree-" + std::to_string(-n);
         plt.linePlot({10000}, g_tmp, g_name);
     }
-
+*/
     // Plot difference
     if (g_trees.size() > 0) {
         mrcpp::FunctionTree<D> d_tree(MRA);
@@ -102,9 +105,9 @@ void apply_operator(int n,
         mrcpp::build_grid(d_tree, *g_trees.front());
         mrcpp::add(-1.0, d_tree, 1.0, *g_tree, -1.0, *g_trees.back());
         d_norm = d_tree.getSquareNorm();
-        mrcpp::refine_grid(d_tree, 1);
-        std::string d_name = "d_tree-" + std::to_string(-n);
-        plt.linePlot({10000}, d_tree, d_name);
+        //mrcpp::refine_grid(d_tree, 1);
+        //std::string d_name = "d_tree-" + std::to_string(-n);
+        //plt.linePlot({10000}, d_tree, d_name);
     }
 
     // Print properties
@@ -141,8 +144,8 @@ int main(int argc, char **argv) {
     println(0, "scale : " << min_scale);
     mrcpp::print::separator(0, ' ', 1);
 
-    auto corner = std::array<int, D>{-1, -1, -1};
-    auto boxes = std::array<int, D>{2, 2, 2};
+    auto corner = std::array<int, D>{0, 0, 0};
+    auto boxes = std::array<int, D>{1, 1, 1};
     auto sfac = std::array<double, 3>{bond_length, bond_length, bond_length};
     auto world = mrcpp::BoundingBox<3>(0, corner, boxes, sfac, true);
     auto basis = mrcpp::InterpolatingBasis(order);

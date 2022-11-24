@@ -30,14 +30,14 @@ mrcpp::GaussExp<D> setup_monopole() {
 
 mrcpp::GaussExp<D> setup_dipole() {
     double x = bond_length / 2.0;
-    double shift = 0.0;
+    double shift = bond_length / 4.0;
     mrcpp::GaussExp<D> f_exp;
     {
         // Setting up analytic Gaussian
         auto beta = 1.2;
         auto alpha = std::pow(beta / mrcpp::pi, 3.0 / 2.0);
         auto f_func = mrcpp::GaussFunc<D>(beta, alpha);
-        f_func.setPos({ 0.0, 0.0, x + shift});
+        f_func.setPos({ x, x, x + shift});
         f_exp.append(f_func);
     }
     {
@@ -45,7 +45,7 @@ mrcpp::GaussExp<D> setup_dipole() {
         auto beta = 0.6;
         auto alpha = -std::pow(beta / mrcpp::pi, 3.0 / 2.0);
         auto f_func = mrcpp::GaussFunc<D>(beta, alpha);
-        f_func.setPos({0.0, 0.0,-x + shift});
+        f_func.setPos({ x, x, x - shift});
         f_exp.append(f_func);
     }
     return f_exp;
@@ -80,7 +80,7 @@ mrcpp::GaussExp<D> setup_quadrupole() {
 
 mrcpp::GaussExp<D> setup_ionic() {
     double x = bond_length / 2.0;
-    double shift = 0.0;
+    double shift = x / 2.0;
     mrcpp::GaussExp<D> f_exp;
     {
         // Setting up analytic Gaussian
@@ -89,11 +89,11 @@ mrcpp::GaussExp<D> setup_ionic() {
         auto f_func = mrcpp::GaussFunc<D>(beta, alpha);
         f_func.setPos({ x + shift, x + shift, x + shift});
         f_exp.append(f_func);
-        f_func.setPos({-x + shift,-x + shift, x + shift});
+        f_func.setPos({ x - shift, x - shift, x + shift});
         f_exp.append(f_func);
-        f_func.setPos({-x + shift, x + shift,-x + shift});
+        f_func.setPos({ x - shift, x + shift, x - shift});
         f_exp.append(f_func);
-        f_func.setPos({ x + shift,-x + shift,-x + shift});
+        f_func.setPos({ x + shift, x - shift, x - shift});
         f_exp.append(f_func);
     }
     {
@@ -101,13 +101,13 @@ mrcpp::GaussExp<D> setup_ionic() {
         auto beta = 0.6;
         auto alpha = -std::pow(beta / mrcpp::pi, 3.0 / 2.0);
         auto f_func = mrcpp::GaussFunc<D>(beta, alpha);
-        f_func.setPos({-x + shift, x + shift, x + shift});
+        f_func.setPos({ x - shift, x + shift, x + shift});
         f_exp.append(f_func);
-        f_func.setPos({ x + shift,-x + shift, x + shift});
+        f_func.setPos({ x + shift, x - shift, x + shift});
         f_exp.append(f_func);
-        f_func.setPos({ x + shift, x + shift,-x + shift});
+        f_func.setPos({ x + shift, x + shift, x - shift});
         f_exp.append(f_func);
-        f_func.setPos({-x + shift,-x + shift,-x + shift});
+        f_func.setPos({ x - shift, x - shift, x - shift});
         f_exp.append(f_func);
     }
     return f_exp;
@@ -169,7 +169,7 @@ mrcpp::FunctionTree<D> * project_monopole(const mrcpp::MultiResolutionAnalysis<D
     auto *f_tree = new mrcpp::FunctionTree<D>(MRA);
 
     // Setup density
-    auto s_fac = std::array<double, 3>{2.0 * bond_length, 2.0 * bond_length, 2.0 * bond_length};
+    auto s_fac = std::array<double, 3>{bond_length, bond_length, bond_length};
     auto f_exp = setup_monopole();
     auto p_exp = f_exp.periodify(s_fac, 8.0);
 
@@ -198,8 +198,9 @@ mrcpp::FunctionTree<D> * project_dipole(const mrcpp::MultiResolutionAnalysis<D> 
     auto *f_tree = new mrcpp::FunctionTree<D>(MRA);
 
     // Setup density
-    auto s_fac = std::array<double, 3>{2.0 * bond_length, 2.0 * bond_length, 2.0 * bond_length};
+    auto s_fac = std::array<double, 3>{1.0 * bond_length, 1.0 * bond_length, 1.0 * bond_length};
     auto f_exp = setup_dipole();
+    println (0, f_exp);
     auto p_exp = f_exp.periodify(s_fac, 8.0);
 
     // Project function
@@ -256,7 +257,7 @@ mrcpp::FunctionTree<D> * project_ionic(const mrcpp::MultiResolutionAnalysis<D> &
     auto *f_tree = new mrcpp::FunctionTree<D>(MRA);
 
     // Setup density
-    auto s_fac = std::array<double, 3>{2.0 * bond_length, 2.0 * bond_length, 2.0 * bond_length};
+    auto s_fac = std::array<double, 3>{1.0 * bond_length, 1.0 * bond_length, 1.0 * bond_length};
     auto f_exp = setup_ionic();
     auto p_exp = f_exp.periodify(s_fac, 8.0);
 

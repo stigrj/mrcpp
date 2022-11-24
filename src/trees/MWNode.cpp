@@ -249,16 +249,12 @@ template <int D> void MWNode<D>::giveChildCoefs(int cIdx, bool overwrite) {
 /** Takes a MWParent and generates coefficients, reverse operation from
  * giveChildrenCoefs */
 template <int D> void MWNode<D>::giveParentCoefs(bool overwrite) {
-    MWNode<D> node = *this;
+    if (getScale() > 0) NOT_REACHED_ABORT;
+    int kp1_d = getKp1_d();
+    int nChildren = getTDim();
+    MWNode<D> child = *this;
     MWNode<D> &parent = getMWParent();
-    int kp1_d = this->getKp1_d();
-    if (node.getScale() == 0) {
-        NodeBox<D> &box = this->getMWTree().getRootBox();
-        auto reverse = getTDim() - 1;
-        for (auto i = 0; i < getTDim(); i++) { parent.setCoefBlock(i, kp1_d, &box.getNode(reverse - i).getCoefs()[0]); }
-    } else {
-        for (auto i = 0; i < getTDim(); i++) { parent.setCoefBlock(i, kp1_d, &node.getCoefs()[0]); }
-    }
+    for (auto i = 0; i < nChildren; i++) parent.setCoefBlock(i, kp1_d, child.getCoefs());
     parent.mwTransform(Compression);
     parent.setHasCoefs();
     parent.calcNorms();

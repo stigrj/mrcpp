@@ -378,15 +378,17 @@ template <int D> void ConvolutionCalculator<D>::touchParentNodes(MWTree<D> &tree
     if (!tree.isPeriodic()) NOT_REACHED_ABORT;
     auto oper_root = this->oper->getOperatorRoot();
     auto func_root = tree.getRootScale();
-    auto car_prod = math_utils::cartesian_product(std::vector<int>{-1, 0}, D);
+    //auto car_prod = math_utils::cartesian_product(std::vector<int>{-1, 0}, D);
     for (auto n = func_root - 1; n > oper_root - 1; n--) {
-        for (auto &a : car_prod) {
-            std::array<int, D> l{};
-            std::copy_n(a.begin(), D, l.begin());
-            NodeIndex<D> idx(n, l);
+            //println(0, "foo");
+        //for (auto &a : car_prod) {
+            //std::array<int, D> l{};
+            //std::copy_n(a.begin(), D, l.begin());
+            NodeIndex<D> idx(n);
+            //println(0, idx);
             tree.getNode(idx);
             this->fTree->getNode(idx);
-        }
+        //}
     }
 }
 

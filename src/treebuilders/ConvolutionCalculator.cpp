@@ -255,13 +255,13 @@ template <int D> void ConvolutionCalculator<D>::calcNode(MWNode<D> &node) {
         os.setFIndex(fIdx);
         for (int ft = 0; ft < this->nComp; ft++) {
             double fNorm = fNode.getComponentNorm(ft);
-            if (fNorm < MachineZero) { continue; }
+            if (fNorm < MachineZero) continue;
             os.setFComponent(ft);
             for (int gt = 0; gt < this->nComp; gt++) {
-                if (o_depth == 0 or gt != 0 or ft != 0) {
+                //if (o_depth == 0 or gt != 0 or ft != 0) {
                     os.setGComponent(gt);
                     applyOperComp(os);
-                }
+                //}
             }
         }
     }
@@ -276,11 +276,15 @@ template <int D> void ConvolutionCalculator<D>::calcNode(MWNode<D> &node) {
 /** Apply each component (term) of the operator expansion to a node in f */
 template <int D> void ConvolutionCalculator<D>::applyOperComp(OperatorState<D> &os) {
     double fNorm = os.fNode->getComponentNorm(os.ft);
-    int o_depth = os.fNode->getScale() - this->oper->getOperatorRoot();
+    int f_scale = os.fNode->getScale();
+    int o_depth = f_scale - this->oper->getOperatorRoot();
     for (int i = 0; i < this->oper->size(); i++) {
         const OperatorTree &ot = (*this->oper)[i];
         const BandWidth &bw = ot.getBandWidth();
-        if (os.getMaxDeltaL() > bw.getMaxWidth(o_depth)) { continue; }
+        int o_root = ot.getApplyRoot();
+        if (f_scale < o_root) continue;
+        if (f_scale > o_root and os.gt == 0 and os.ft == 0) continue;
+        if (os.getMaxDeltaL() > bw.getMaxWidth(o_depth)) continue;
         os.oTree = &ot;
         os.fThreshold = getBandSizeFactor(i, o_depth, os) * fNorm;
         applyOperator(os);

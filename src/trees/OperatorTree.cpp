@@ -37,6 +37,7 @@ namespace mrcpp {
 
 OperatorTree::OperatorTree(const MultiResolutionAnalysis<2> &mra, double np, const std::string &name)
         : MWTree<2>(mra, name)
+        , applyRoot(mra.getRootScale())
         , normPrec(np)
         , bandWidth(nullptr)
         , nodePtrStore(nullptr)
@@ -98,7 +99,7 @@ void OperatorTree::clearBandWidth() {
     this->bandWidth = nullptr;
 }
 
-void OperatorTree::calcBandWidth(double prec) {
+void OperatorTree::calcBandWidth(double prec, bool screen) {
     if (this->bandWidth != nullptr) MSG_ERROR("Band width not properly cleared");
     this->bandWidth = new BandWidth(getDepth());
 
@@ -108,12 +109,20 @@ void OperatorTree::calcBandWidth(double prec) {
     if (prec < 0.0) prec = this->normPrec;
     for (int depth = 0; depth < this->getDepth(); depth++) {
         int n = getRootScale() + depth;
+        if (n < 0 and screen) {
+            this->bandWidth->setWidth(depth, 0, 0);
+            this->bandWidth->setWidth(depth, 1, -1);
+            this->bandWidth->setWidth(depth, 2, -1);
+            this->bandWidth->setWidth(depth, 3, 0);
+            continue;
+        }
+        double sfac = 8.0 * std::pow(2.0, n);
         int l = 0;
         bool done = false;
         while (not done) {
             done = true;
             MWNode<2> &node = getNode(depth, l);
-            double thrs = std::max(MachinePrec, prec / (8.0 * (1 << depth)));
+            double thrs = std::max(MachinePrec, prec / sfac);
             for (int k = 0; k < 4; k++) {
                 if (node.getComponentNorm(k) > thrs) {
                     this->bandWidth->setWidth(depth, k, l);

@@ -13,7 +13,7 @@ void apply_operator(int n,
                     std::vector<mrcpp::FunctionTree<D> *> &g_trees,
                     std::vector<double> &energies) {
     int r = 1;
-    switch (-n) {
+    switch (-n-0) {
         case 0:
             r = 32;
             break;
@@ -48,7 +48,7 @@ void apply_operator(int n,
             r = 1;
             break;
     }
-    r = 1;
+    //r = 1;
 
     mrcpp::Timer t0;
     mrcpp::PoissonOperator P(MRA, prec, n, r);
@@ -57,7 +57,13 @@ void apply_operator(int n,
 
     // Apply Poisson operator
     mrcpp::Timer t1;
-    mrcpp::apply(-1.0, *g_tree, P, *f_tree);
+    //mrcpp::Printer::setPrintLevel(10);
+    //mrcpp::print::separator(0, ' ');
+    //mrcpp::print::separator(0, ' ');
+    //mrcpp::print::separator(0, ' ');
+    //mrcpp::print::separator(0, '+');
+    mrcpp::apply(prec, *g_tree, P, *f_tree);
+    //mrcpp::Printer::setPrintLevel(0);
     t1.stop();
 
     // Compute properties

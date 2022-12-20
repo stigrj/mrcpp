@@ -68,19 +68,48 @@ void ConvolutionOperator<D>::initialize(GaussExp<1> &kernel, double k_prec, doub
     TreeBuilder<2> builder;
     OperatorAdaptor adaptor(o_prec, o_mra.getMaxScale());
 
+    //int m = 35;
+    //for (int i = m; i < m+1; i++) {
+    Eigen::MatrixXi roots = Eigen::MatrixXi::Zero(2,15);
+    for (int i = 0; i < 15; i++) roots(0,i) = o_mra.getRootScale() + i;
+
     for (int i = 0; i < kernel.size(); i++) {
         // Rescale Gaussian for D-dim application
         auto *k_func = kernel.getFunc(i).copy();
         k_func->setCoef(std::pow(k_func->getCoef(), 1.0/D));
+        double beta = k_func->getExp(0);
+        if (beta < 0.001) continue;
+        //println(0, i);
 
         FunctionTree<1> k_tree(k_mra);
         mrcpp::build_grid(k_tree, *k_func);    // Generate empty grid to hold narrow Gaussian
-        mrcpp::project(k_prec, k_tree, *k_func); // Project Gaussian starting from the empty grid
+        mrcpp::project(1.0e-10, k_tree, *k_func, 15); // Project Gaussian starting from the empty grid
         delete k_func;
 
         CrossCorrelationCalculator calculator(k_tree);
         auto o_tree = std::make_unique<OperatorTree>(o_mra, o_prec);
         builder.build(*o_tree, calculator, adaptor, -1); // Expand 1D kernel into 2D operator
+
+        int o_root = o_mra.getRootScale();
+        //if (beta > 0.001 and o_root <= -3) o_tree->setApplyRoot(-3);
+        //if (beta > 0.002 and o_root <= -2) o_tree->setApplyRoot(-2);
+        //if (beta > 0.004 and o_root <= -2) o_tree->setApplyRoot(-2);
+        //if (beta > 0.008 and o_root <= -2) o_tree->setApplyRoot(-2);
+        //if (beta > 0.016 and o_root <= -2) o_tree->setApplyRoot(-2);
+        //if (beta > 0.032 and o_root <= -1) o_tree->setApplyRoot(-1);
+        //if (beta > 0.064 and o_root <= -0) o_tree->setApplyRoot(-0);
+        //if (beta > 0.128 and o_root <= -0) o_tree->setApplyRoot(-0);
+        //if (beta > 0.256 and o_root <= -0) o_tree->setApplyRoot(-0);
+        //if (beta > 0.0003 and o_root <= -7) o_tree->setApplyRoot(-7);
+        //if (beta > 0.0006 and o_root <= -6) o_tree->setApplyRoot(-6);
+        if (beta > 0.0005 and o_root <= -5) o_tree->setApplyRoot(-5);
+        if (beta > 0.0010 and o_root <= -4) o_tree->setApplyRoot(-4);
+        if (beta > 0.0020 and o_root <= -3) o_tree->setApplyRoot(-3);
+        if (beta > 0.0040 and o_root <= -2) o_tree->setApplyRoot(-2);
+        if (beta > 0.0010 and o_root <= -1) o_tree->setApplyRoot(-1);
+        if (beta > 0.0320 and o_root <= -0) o_tree->setApplyRoot(-0);
+        auto depth = o_tree->getApplyRoot() - o_mra.getRootScale();
+        roots(1, depth) = roots(1, depth) + 1;
 
         Timer trans_t;
         o_tree->mwTransform(BottomUp);
@@ -91,6 +120,10 @@ void ConvolutionOperator<D>::initialize(GaussExp<1> &kernel, double k_prec, doub
 
         this->oper_exp.push_back(std::move(o_tree));
     }
+    mrcpp::print::separator(0, ' ');
+    mrcpp::print::separator(0, '-');
+    println(0, roots);
+    //println(0, kernel.size() << "  ->  " << this->oper_exp.size());
 }
 
 template <int D>

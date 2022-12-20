@@ -80,12 +80,15 @@ template <int D>
 void MWOperator<D>::calcBandWidths(double prec) {
     int maxDepth = 0;
     // First compute BandWidths and find depth of the deepest component
+    int m = 0;
     for (auto &i : this->oper_exp) {
+        bool screen = false;//(m < 100) ? false : true;
         OperatorTree &oTree = *i;
-        oTree.calcBandWidth(prec);
+        oTree.calcBandWidth(prec, screen);
         const BandWidth &bw = oTree.getBandWidth();
         int depth = bw.getDepth();
         if (depth > maxDepth) maxDepth = depth;
+        m++;
     }
     this->band_max = std::vector<int>(maxDepth + 1, -1);
 

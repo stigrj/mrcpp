@@ -112,12 +112,12 @@ template <int D> void apply(double prec, FunctionTree<D> &out, ConvolutionOperat
             norms(n - minScale,3) += w_norm;
             // println(0, node);
         }
-        println(1, "\nINPUT");
-        mrcpp::print::separator(1, '=');
-        println(1, "      Scale             SquareNorm           ScalingNorm         WaveletNorm")
-        mrcpp::print::separator(1, '-');
-        println(1, norms);
-        mrcpp::print::separator(1, '=', 2);
+        println(100, "\nINPUT");
+        mrcpp::print::separator(100, '=');
+        println(100, "      Scale             SquareNorm           ScalingNorm         WaveletNorm")
+        mrcpp::print::separator(100, '-');
+        println(100, norms);
+        mrcpp::print::separator(100, '=', 2);
     }
     {
         Eigen::MatrixXd norms = Eigen::MatrixXd::Zero(maxDepth, 4);
@@ -150,12 +150,12 @@ template <int D> void apply(double prec, FunctionTree<D> &out, ConvolutionOperat
             norms(n - minScale,3) += w_norm;
             // println(0, node);
         }
-        println(1, "\nOUTPUT PRE MW TRANSFORM");
-        mrcpp::print::separator(1, '=');
-        println(1, "      Scale             SquareNorm           ScalingNorm         WaveletNorm")
-        mrcpp::print::separator(1, '-');
-        println(1, norms);
-        mrcpp::print::separator(1, '=', 2);
+        println(100, "\nOUTPUT PRE MW TRANSFORM");
+        mrcpp::print::separator(100, '=');
+        println(100, "      Scale             SquareNorm           ScalingNorm         WaveletNorm")
+        mrcpp::print::separator(100, '-');
+        println(100, norms);
+        mrcpp::print::separator(100, '=', 2);
     }
     out.mwTransform(TopDown, false); // add coarse scale contributions
     out.mwTransform(BottomUp);
@@ -191,12 +191,12 @@ template <int D> void apply(double prec, FunctionTree<D> &out, ConvolutionOperat
             norms(n - minScale,3) += w_norm;
             // println(0, node);
         }
-        println(1, "\nOUTPUT POST MW TRANSFORM");
-        mrcpp::print::separator(1, '=');
-        println(1, "      Scale             SquareNorm           ScalingNorm         WaveletNorm")
-        mrcpp::print::separator(1, '-');
-        println(1, norms);
-        mrcpp::print::separator(1, '=', 2);
+        println(100, "\nOUTPUT POST MW TRANSFORM");
+        mrcpp::print::separator(100, '=');
+        println(100, "      Scale             SquareNorm           ScalingNorm         WaveletNorm")
+        mrcpp::print::separator(100, '-');
+        println(100, norms);
+        mrcpp::print::separator(100, '=', 2);
     }
     out.deleteGeneratedParents();
     inp.deleteGenerated();

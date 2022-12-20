@@ -39,11 +39,14 @@ public:
 
     double getNormPrecision() const { return this->normPrec; }
 
-    void calcBandWidth(double prec = -1.0);
+    void calcBandWidth(double prec = -1.0, bool screen = false);
     void clearBandWidth();
 
     void setupOperNodeCache();
     void clearOperNodeCache();
+
+    int getApplyRoot() const { return this->applyRoot; }
+    void setApplyRoot(int n) { this->applyRoot = n; }
 
     BandWidth &getBandWidth() { return *this->bandWidth; }
     const BandWidth &getBandWidth() const { return *this->bandWidth; }
@@ -55,6 +58,7 @@ public:
     void mwTransformUp() override;
 
 protected:
+    int applyRoot;
     const double normPrec;
     BandWidth *bandWidth;
     OperatorNode ***nodePtrStore;  ///< Avoids tree lookups
